@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Dashboard - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter & Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Importmap for Firebase -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-brand-border sticky top-0 z-40">
+    <div class="px-4 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-brand-green flex items-center justify-center text-white">
+          <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+        </div>
+        <div>
+          <h1 class="font-bold tracking-tight text-sm uppercase text-brand-dark">Ganga Maxx</h1>
+          <p class="text-[10px] text-brand-green font-semibold tracking-wider">B2B MARKETPLACE</p>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-4">
+        <!-- Notification bell -->
+        <button class="relative p-2 text-brand-text-muted hover:text-brand-dark transition-colors rounded-full hover:bg-slate-100">
+          <i data-lucide="bell" class="h-5 w-5"></i>
+          <span class="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-rose-500 border border-white"></span>
+        </button>
+
+        <!-- Vertical Divider -->
+        <span class="h-6 w-px bg-brand-border"></span>
+
+        <!-- User Info with profile dropdown / name -->
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-brand-green/10 text-brand-green font-bold flex items-center justify-center border border-brand-green/20" id="user_avatar">
+            CU
+          </div>
+          <div class="hidden sm:block text-left">
+            <h4 class="text-xs font-semibold leading-none" id="user_name">B2B Partner</h4>
+            <span class="text-[10px] text-brand-text-muted font-medium" id="user_institution">Hospital</span>
+          </div>
+        </div>
+
+        <!-- Logout button -->
+        <button onclick="window.handleLogout()" class="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-md font-semibold text-rose-500 hover:bg-rose-50 transition-colors">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Frame -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar Navigation for Desktop -->
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-brand-border py-6 px-4 gap-6 shrink-0 justify-between">
+      <div class="space-y-1">
+        <p class="text-[10px] font-bold tracking-wider text-brand-text-muted uppercase px-3 mb-2">Workspace</p>
+        
+        <a href="/pages/customer/dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-green text-white">
+          <i data-lucide="home" class="h-4 w-4"></i>
+          <span>Home Dashboard</span>
+        </a>
+        
+        <a href="/pages/customer/products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="grid" class="h-4 w-4"></i>
+          <span>Product Catalog</span>
+        </a>
+        
+        <a href="/pages/customer/place-order.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="clipboard-list" class="h-4 w-4"></i>
+          <span>Bulk Order Entry</span>
+        </a>
+        
+        <a href="/pages/customer/my-orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+          <span>My Orders</span>
+        </a>
+        
+        <a href="/pages/customer/quotation.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="file-text" class="h-4 w-4"></i>
+          <span>Quotations</span>
+        </a>
+        
+        <button onclick="document.getElementById('gm_chat_bubble').click()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-green hover:bg-brand-green hover:text-white transition-colors border border-brand-green/20 mt-4">
+          <i data-lucide="bot" class="h-4 w-4"></i>
+          <span>Talk to AI Assistant</span>
+        </button>
+      </div>
+
+      <!-- Quick support contact -->
+      <div class="bg-brand-green/5 rounded-lg p-4 border border-brand-green/10 text-xs">
+        <p class="font-bold text-brand-green mb-1">Ganga Maxx Support</p>
+        <p class="text-brand-text-muted mb-3">Reach out for credit line increments or order assistance.</p>
+        <a href="https://wa.me/919999999999" target="_blank" class="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-brand-green hover:bg-brand-hover text-white rounded font-medium transition-colors">
+          <i data-lucide="phone" class="h-3.5 w-3.5"></i>
+          WhatsApp Support
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content Canvas -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 md:pb-8">
+      
+      <!-- Quick tabs at top for easy page layout configuration -->
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-brand-dark" id="page_title">Home Dashboard</h2>
+          <p class="text-xs text-brand-text-muted" id="page_subtitle">Welcome to your B2B Ganga Maxx wholesale client dashboard.</p>
+        </div>
+        <div class="text-right text-xs text-brand-text-muted font-medium bg-white px-3 py-1.5 rounded-md border border-brand-border">
+          <span id="current_date">June 26, 2026</span>
+        </div>
+      </div>
+
+      <!-- Tab View Containers -->
+      <div id="section_home" class="space-y-6">
+        
+        <!-- Welcome Card -->
+        <div class="bg-gradient-to-r from-brand-dark to-slate-800 text-white rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
+          <div class="absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10">
+            <i data-lucide="shopping-bag" class="h-48 w-48"></i>
+          </div>
+          <div class="z-10">
+            <span class="text-brand-green text-[10px] font-bold tracking-wider uppercase bg-brand-green/10 px-2.5 py-1 rounded">MEMBER PARTNER</span>
+            <h3 class="text-lg md:text-xl font-bold mt-2 mb-1">Hello <span id="welcome_name">Customer</span>,</h3>
+            <p class="text-slate-300 text-xs" id="welcome_institution">Managing your wholesale medical and surgical procurements has never been easier.</p>
+          </div>
+          <div class="flex items-center gap-2 bg-slate-700/50 p-3 rounded-lg border border-slate-600/30 z-10 text-xs">
+            <div class="p-2 rounded bg-brand-green/20 text-brand-green">
+              <i data-lucide="shield-check" class="h-5 w-5"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-200">Verified Account</p>
+              <p class="text-[10px] text-slate-400">ID: <span id="welcome_id" class="font-mono">CUST-LOAD</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Stats Grid -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Stat 1: Active Orders -->
+          <div class="bg-white rounded-xl p-4 border border-brand-border shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold text-brand-text-muted uppercase tracking-wider">Active Orders</p>
+              <h3 class="text-2xl font-bold tracking-tight text-brand-dark mt-1" id="stat_active_orders">0</h3>
+            </div>
+            <div class="h-10 w-10 rounded-lg bg-emerald-50 text-brand-green flex items-center justify-center">
+              <i data-lucide="package" class="h-5 w-5"></i>
+            </div>
+          </div>
+
+          <!-- Stat 2: Pending Quotations -->
+          <div class="bg-white rounded-xl p-4 border border-brand-border shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold text-brand-text-muted uppercase tracking-wider">Pending Quotations</p>
+              <h3 class="text-2xl font-bold tracking-tight text-brand-dark mt-1" id="stat_pending_quotes">0</h3>
+            </div>
+            <div class="h-10 w-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <i data-lucide="file-question" class="h-5 w-5"></i>
+            </div>
+          </div>
+
+          <!-- Stat 3: Credit Balance -->
+          <div class="bg-white rounded-xl p-4 border border-brand-border shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold text-brand-text-muted uppercase tracking-wider">Credit Balance</p>
+              <h3 class="text-2xl font-bold tracking-tight text-brand-dark mt-1" id="stat_credit_balance">₹0</h3>
+            </div>
+            <div class="h-10 w-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+              <i data-lucide="credit-card" class="h-5 w-5"></i>
+            </div>
+          </div>
+
+          <!-- Stat 4: Reorder Due -->
+          <div class="bg-white rounded-xl p-4 border border-brand-border shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-[11px] font-semibold text-brand-text-muted uppercase tracking-wider">Reorder Due</p>
+              <h3 class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded inline-block mt-2" id="stat_reorder_due">No Due Tasks</h3>
+            </div>
+            <div class="h-10 w-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <i data-lucide="refresh-cw" class="h-5 w-5"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="bg-white rounded-xl p-6 border border-brand-border shadow-sm">
+          <h4 class="text-xs font-bold tracking-wider text-brand-text-muted uppercase mb-4">Quick Procurement Actions</h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <a href="/pages/customer/place-order.html" class="flex flex-col items-center gap-3 p-4 rounded-xl border border-brand-border hover:border-brand-green hover:bg-brand-green/5 transition-all text-center">
+              <div class="h-10 w-10 rounded-full bg-brand-green/10 text-brand-green flex items-center justify-center">
+                <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+              </div>
+              <div>
+                <span class="text-xs font-semibold block text-brand-dark">Place New Order</span>
+                <span class="text-[10px] text-brand-text-muted">Enter custom bulk qtys</span>
+              </div>
+            </a>
+
+            <a href="/pages/customer/quotation.html" class="flex flex-col items-center gap-3 p-4 rounded-xl border border-brand-border hover:border-brand-green hover:bg-brand-green/5 transition-all text-center">
+              <div class="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i data-lucide="file-text" class="h-5 w-5"></i>
+              </div>
+              <div>
+                <span class="text-xs font-semibold block text-brand-dark">Request Quotation</span>
+                <span class="text-[10px] text-brand-text-muted">Ask custom discount rate</span>
+              </div>
+            </a>
+
+            <a href="/pages/customer/my-orders.html" class="flex flex-col items-center gap-3 p-4 rounded-xl border border-brand-border hover:border-brand-green hover:bg-brand-green/5 transition-all text-center">
+              <div class="h-10 w-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+                <i data-lucide="truck" class="h-5 w-5"></i>
+              </div>
+              <div>
+                <span class="text-xs font-semibold block text-brand-dark">Track Order</span>
+                <span class="text-[10px] text-brand-text-muted">Live shipping timelines</span>
+              </div>
+            </a>
+
+            <button onclick="reorderLast()" class="flex flex-col items-center gap-3 p-4 rounded-xl border border-brand-border hover:border-brand-green hover:bg-brand-green/5 transition-all text-center w-full">
+              <div class="h-10 w-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+                <i data-lucide="refresh-cw" class="h-5 w-5"></i>
+              </div>
+              <div>
+                <span class="text-xs font-semibold block text-brand-dark">Reorder Last</span>
+                <span class="text-[10px] text-brand-text-muted">One-click previous order</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Details Grid for Account Profile Summary -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Recent Orders Widget -->
+          <div class="lg:col-span-2 bg-white rounded-xl border border-brand-border p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-brand-border pb-3">
+              <h4 class="text-sm font-bold text-brand-dark">Recent Submissions</h4>
+              <a href="/pages/customer/my-orders.html" class="text-xs text-brand-green font-semibold hover:underline">View All</a>
+            </div>
+            
+            <div class="divide-y divide-brand-border overflow-x-auto" id="recent_orders_list">
+              <div class="py-3 text-center text-xs text-brand-text-muted">
+                Loading recent transactions...
+              </div>
+            </div>
+          </div>
+
+          <!-- Account & Billing Settings -->
+          <div class="bg-white rounded-xl border border-brand-border p-5 shadow-sm space-y-4">
+            <div class="border-b border-brand-border pb-3">
+              <h4 class="text-sm font-bold text-brand-dark">Account Details</h4>
+            </div>
+
+            <!-- Profile Info Edit Form -->
+            <form id="profile_form" class="space-y-3">
+              <div>
+                <label class="block text-[10px] font-bold text-brand-text-muted uppercase">institution Name</label>
+                <input type="text" id="prof_inst_name" class="w-full mt-1 p-2 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none" readonly>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-brand-text-muted uppercase">Contact Person Name</label>
+                <input type="text" id="prof_name" class="w-full mt-1 p-2 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-brand-text-muted uppercase">WhatsApp Number</label>
+                <input type="text" id="prof_whatsapp" class="w-full mt-1 p-2 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-brand-text-muted uppercase">Direct Phone Number</label>
+                <input type="text" id="prof_phone" class="w-full mt-1 p-2 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none">
+              </div>
+              <div class="border-t border-brand-border pt-2">
+                <label class="block text-[10px] font-bold text-brand-text-muted uppercase">Security: Login Email</label>
+                <input type="email" id="prof_email" class="w-full mt-1 p-2 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-brand-text-muted uppercase">Security: Update Password</label>
+                <input type="password" id="prof_password" class="w-full mt-1 p-2 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none" placeholder="New Password (blank to keep)">
+              </div>
+              <button type="submit" id="save_profile_btn" class="w-full py-2 bg-brand-green hover:bg-brand-hover text-white rounded text-xs font-semibold transition-colors mt-2 shadow-sm">
+                Save Account Updates
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Tab Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-brand-border h-16 flex items-center justify-around z-40 px-2 shadow-lg">
+    <a href="/pages/customer/dashboard.html" class="flex flex-col items-center justify-center flex-1 text-brand-green">
+      <i data-lucide="home" class="h-5 w-5"></i>
+      <span class="text-[9px] font-semibold mt-1">Home</span>
+    </a>
+    <a href="/pages/customer/products.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="grid" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Products</span>
+    </a>
+    <a href="/pages/customer/place-order.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="clipboard-list" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">New Order</span>
+    </a>
+    <a href="/pages/customer/my-orders.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="shopping-cart" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Orders</span>
+    </a>
+  </nav>
+
+  <script src="/js/toast.js"></script>
+  <script src="/components/chat-widget.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  
+  <!-- Firebase Scripts & Core Dashboard Controller -->
+  <script type="module">
+    import { auth, db } from '/firebase/firebaseConfig.js';
+    import { onAuthStateChanged, signOut } from 'firebase/auth';
+    import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'firebase/firestore';
+    import { initNotifications } from '/js/notifications.js';
+
+    // Global session holder
+    let currentUser = null;
+
+    // Direct Check logic
+    function initSession() {
+      const stored = localStorage.getItem('currentUser');
+      if (!stored) {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      
+      currentUser = JSON.parse(stored);
+      if (currentUser.role !== 'customer') {
+        localStorage.removeItem('currentUser');
+        window.location.href = '/pages/login.html';
+        return;
+      }
+
+      // Populate layout details
+      document.getElementById('user_name').innerText = currentUser.name || 'B2B Client';
+      document.getElementById('user_institution').innerText = currentUser.institutionName || 'Ganga Maxx Partner';
+      document.getElementById('user_avatar').innerText = (currentUser.name || 'CU').substring(0, 2).toUpperCase();
+      
+      document.getElementById('welcome_name').innerText = currentUser.name || 'B2B Client';
+      document.getElementById('welcome_institution').innerText = `Primary procurement manager for ${currentUser.institutionName || 'Ganga Maxx Partner'}.`;
+      document.getElementById('welcome_id').innerText = currentUser.uid || currentUser.id;
+
+      // Populate forms
+      document.getElementById('prof_name').value = currentUser.name || '';
+      document.getElementById('prof_inst_name').value = currentUser.institutionName || 'Hospital';
+      document.getElementById('prof_whatsapp').value = currentUser.whatsappNumber || '';
+      document.getElementById('prof_phone').value = currentUser.phone || '';
+      document.getElementById('prof_email').value = currentUser.email || '';
+
+      // Set today's date
+      const d = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('current_date').innerText = d.toLocaleDateString('en-US', options);
+
+      // Fetch dynamic statistics and list
+      // Removed fetchDashboardStats from here as it's called by onAuthStateChanged
+    }
+
+    // Dynamic Stats loader
+    async function fetchDashboardStats() {
+      try {
+        const uid = currentUser.uid || currentUser.id;
+        
+        // Parallelize all Firestore lookups
+        const [userDoc, ordersSnapshot, quotesSnapshot] = await Promise.all([
+          getDoc(doc(db, 'users', uid)),
+          getDocs(query(collection(db, 'orders'), where('customerId', '==', uid))),
+          getDocs(query(collection(db, 'quotations'), where('customerId', '==', uid)))
+        ]);
+
+        // 1. Process user doc
+        if (userDoc.exists()) {
+          const freshData = userDoc.data();
+          const balance = freshData.creditLimit !== undefined ? (freshData.creditLimit - (freshData.creditUsed || 0)) : 100000;
+          document.getElementById('stat_credit_balance').innerText = `₹${balance.toLocaleString()}`;
+          
+          if (freshData.creditStatus === 'overdue') {
+            document.getElementById('stat_reorder_due').innerText = 'Credit Overdue!';
+            document.getElementById('stat_reorder_due').className = 'text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-1 rounded inline-block mt-2';
+          } else {
+            document.getElementById('stat_reorder_due').innerText = 'Account Clear';
+            document.getElementById('stat_reorder_due').className = 'text-xs font-semibold text-brand-success bg-emerald-50 px-2 py-1 rounded inline-block mt-2';
+          }
+        }
+
+        // 2. Process orders
+        let activeOrdersCount = 0;
+        const recentOrders = [];
+        ordersSnapshot.forEach(doc => {
+          const ord = doc.data();
+          if (['pending', 'approved', 'packed', 'dispatched'].includes(ord.status || 'pending')) {
+            activeOrdersCount++;
+          }
+          recentOrders.push({ id: doc.id, ...ord });
+        });
+        document.getElementById('stat_active_orders').innerText = activeOrdersCount;
+
+        // Sort recent orders by date descending, grab first 5
+        recentOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        renderRecentOrders(recentOrders.slice(0, 5));
+
+        // 3. Process quotations
+        let pendingQuotesCount = 0;
+        quotesSnapshot.forEach(doc => {
+          const qtn = doc.data();
+          if (qtn.status === 'sent' || qtn.status === 'draft') {
+            pendingQuotesCount++;
+          }
+        });
+        document.getElementById('stat_pending_quotes').innerText = pendingQuotesCount;
+
+      } catch (err) {
+        console.error("Error loading stats dashboard:", err);
+      }
+    }
+
+    function renderRecentOrders(orders) {
+      const container = document.getElementById('recent_orders_list');
+      if (orders.length === 0) {
+        container.innerHTML = `
+          <div class="py-6 text-center text-xs text-brand-text-muted">
+            No orders or quotations submitted yet. Start your procurement!
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = orders.map(ord => {
+        let statusColor = 'bg-amber-100 text-amber-800';
+        if (ord.status === 'delivered') statusColor = 'bg-emerald-100 text-emerald-800';
+        if (ord.status === 'dispatched') statusColor = 'bg-blue-100 text-blue-800';
+        if (ord.status === 'cancelled') statusColor = 'bg-rose-100 text-rose-800';
+
+        const dateStr = ord.createdAt ? new Date(ord.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+        const orderIdClean = ord.orderId || ord.id;
+        
+        return `
+          <div class="py-3 flex items-center justify-between text-xs gap-2">
+            <div>
+              <p class="font-bold text-brand-dark">${orderIdClean}</p>
+              <p class="text-[10px] text-brand-text-muted">${dateStr} • ${ord.items ? ord.items.length : 0} items</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="font-bold text-brand-dark">₹${Number(ord.total || ord.orderTotal || 0).toLocaleString()}</span>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${statusColor} uppercase">${ord.status || 'pending'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    let authResolve;
+    const authInitializedPromise = new Promise(resolve => { authResolve = resolve; });
+
+    // Helper to get fresh token
+    async function getCustomerToken() {
+      await authInitializedPromise;
+      if (auth.currentUser) {
+        try {
+          return await auth.currentUser.getIdToken();
+        } catch (err) {
+          console.error("Error getting ID token:", err);
+        }
+      }
+      return currentUser?.uid || currentUser?.id;
+    }
+
+    // Handle profile form submit
+    document.getElementById('profile_form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const saveBtn = document.getElementById('save_profile_btn');
+      saveBtn.disabled = true;
+      saveBtn.innerText = "Saving...";
+
+      try {
+        const payload = {
+          name: document.getElementById('prof_name').value,
+          whatsappNumber: document.getElementById('prof_whatsapp').value,
+          phone: document.getElementById('prof_phone').value,
+          email: document.getElementById('prof_email').value
+        };
+
+        const password = document.getElementById('prof_password').value;
+        if (password) {
+          payload.password = password;
+        }
+
+        const idToken = await getCustomerToken();
+        const res = await fetch('/customer/update-profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || 'Failed to update profile');
+        }
+
+        // Update local memory
+        currentUser.name = payload.name;
+        currentUser.whatsappNumber = payload.whatsappNumber;
+        currentUser.phone = payload.phone;
+        currentUser.email = payload.email;
+
+        const sessionData = {
+          uid: currentUser.uid || currentUser.id,
+          name: currentUser.name,
+          institutionName: currentUser.institutionName,
+          whatsappNumber: currentUser.whatsappNumber,
+          phone: currentUser.phone,
+          email: currentUser.email,
+          role: currentUser.role
+        };
+        localStorage.setItem('currentUser', JSON.stringify(sessionData));
+
+        if (window.toast) window.toast.show("Security credentials and profile updated!");
+        document.getElementById('prof_password').value = ''; // Reset password field
+        initSession();
+      } catch (err) {
+        console.error("Failed to update profile", err);
+        if (window.toast) window.toast.show(err.message, true);
+        else alert("Error: " + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = "Save Account Updates";
+      }
+    });
+
+    // Reorder Last previous order function
+    window.reorderLast = async function() {
+      try {
+        const uid = currentUser.uid || currentUser.id;
+        const ordersRef = collection(db, 'orders');
+        const ordersQuery = query(ordersRef, where('customerId', '==', uid));
+        const ordersSnapshot = await getDocs(ordersQuery);
+        
+        const previousOrders = [];
+        ordersSnapshot.forEach(doc => {
+          previousOrders.push({ id: doc.id, ...doc.data() });
+        });
+
+        if (previousOrders.length === 0) {
+          if (window.toast) window.toast.show("No past orders found to copy. Navigate to Bulk Order Entry to create one.", "error"); else alert("No past orders found to copy. Navigate to Bulk Order Entry to create one.");
+          return;
+        }
+
+        // Sort and get the latest
+        previousOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        const lastOrder = previousOrders[0];
+
+        // Store standard reorder state inside sessionStorage to parse in bulk order page
+        sessionStorage.setItem('reorder_items_cache', JSON.stringify(lastOrder.items));
+        if (window.toast) window.toast.show("Copied items from your last order! Redirecting to Bulk Order Entry...", "info"); else alert("Copied items from your last order! Redirecting to Bulk Order Entry...");
+        window.location.href = '/pages/customer/place-order.html';
+      } catch (err) {
+        console.error("Error trying to reorder last item:", err);
+        if (window.toast) window.toast.show("Failed to copy past order details.", "error"); else alert("Failed to copy past order details.");
+      }
+    };
+
+    // Logout function
+    window.handleLogout = async function() {
+      try {
+        await signOut(auth);
+      } catch (e) {}
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('subRole');
+      window.location.href = '/pages/login.html';
+    };
+
+    // Run session check on page load
+    initSession();
+
+    // Re-initialize Lucide icons
+    lucide.createIcons();
+
+    // Listeners and bootup
+    onAuthStateChanged(auth, (user) => {
+      authResolve();
+      if (user) {
+        initNotifications(user.uid);
+        console.log("Firebase Auth user is verified", user.uid);
+        fetchDashboardStats();
+      } else {
+        // Only redirect if we don't have a valid local session
+        if (!currentUser) {
+          window.location.href = '/pages/login.html?role=customer';
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>

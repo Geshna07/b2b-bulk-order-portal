@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/css/global.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <!-- Importmap for standard Firebase resolve in browser -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark flex flex-col min-h-screen justify-between py-8 px-4 font-sans">
+
+  <!-- Main Container -->
+  <main class="max-w-lg w-full mx-auto my-auto flex flex-col gap-6">
+    
+    <!-- Logo & Header -->
+    <header class="text-center flex flex-col items-center gap-2">
+      <!-- Shopping Bag Icon SVG -->
+      <div class="h-10 w-10 rounded-full bg-brand-green/10 flex items-center justify-center text-brand-green">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+        </svg>
+      </div>
+      <div>
+        <span class="text-brand-green text-xs font-bold tracking-widest uppercase block">GANGA MAXX MARKETPLACE</span>
+        <h1 class="text-xl font-bold tracking-tight text-brand-dark mt-1">Join the B2B Portal</h1>
+        <p class="text-brand-text-muted text-xs mt-1">
+          Select your registration path to access wholesale catalogs, order logs, and commercial features.
+        </p>
+      </div>
+    </header>
+
+    <!-- Selection Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      <!-- Customer Path Card -->
+      <div class="card bg-white hover:border-brand-green border border-brand-border transition-all hover:shadow-lg p-6 flex flex-col justify-between items-start gap-4">
+        <div>
+          <div class="h-10 w-10 rounded-lg bg-brand-green/10 flex items-center justify-center text-brand-green mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v16.5m16.5-16.5v16.5m-15-13.5h3m-3 3h3m-3 3h3m3-6h3m-3 3h3m-3 3h3m3-6h3m-3 3h3m-3 3h3m-10.5 6h12" />
+            </svg>
+          </div>
+          <h2 class="text-lg font-bold text-brand-dark">Institutional Customer</h2>
+          <p class="text-brand-text-muted text-xs mt-2 leading-relaxed">
+            For Schools, Colleges, Hospitals, Hotels, Offices, Housekeeping Vendors, and Commercial Buyers. Manage quotations, invoices, and large volume commercial orders.
+          </p>
+        </div>
+        <a href="/pages/register-customer.html" class="btn-secondary w-full py-2.5 text-center text-sm font-semibold text-white mt-2">
+          Register as Customer
+        </a>
+      </div>
+
+      <!-- Staff Path Card -->
+      <div class="card bg-white hover:border-brand-dark border border-brand-border transition-all hover:shadow-lg p-6 flex flex-col justify-between items-start gap-4">
+        <div>
+          <div class="h-10 w-10 rounded-lg bg-brand-dark/10 flex items-center justify-center text-brand-dark mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+            </svg>
+          </div>
+          <h2 class="text-lg font-bold text-brand-dark">Internal Staff Member</h2>
+          <p class="text-brand-text-muted text-xs mt-2 leading-relaxed">
+            For Sales Admin, Warehouse Staff, Salesmen, Delivery Coordinators, and Accounts Managers. Access internal tools to dispatch, approve, and audit commercial orders.
+          </p>
+        </div>
+        <a href="/pages/register-staff.html" class="btn-primary w-full py-2.5 text-center text-sm font-semibold text-white mt-2">
+          Request Staff Access
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Back to Login -->
+    <div class="text-center mt-2">
+      <a href="/pages/login.html" class="inline-flex items-center gap-2 font-semibold text-brand-green hover:text-brand-hover text-sm transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back to Login Portal
+      </a>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-brand-text-muted mt-8">
+    &copy; 2026 Ganga Maxx Marketplace. Commercial Wholesaler & Distribution Systems.
+  </footer>
+
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+</body>
+</html>

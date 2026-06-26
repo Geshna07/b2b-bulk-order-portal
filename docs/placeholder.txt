@@ -1,0 +1,3 @@
+B2B Bulk Order Portal Architecture
+----------------------------------
+This file will contain design blueprints, pricing tables, database collection schemes, and API descriptions.

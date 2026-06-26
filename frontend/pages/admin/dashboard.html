@@ -1,0 +1,3048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter & Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/css/global.css">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Importmap for standard Firebase resolve in browser -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark min-h-screen flex font-sans overflow-hidden">
+
+  <!-- Mobile Sidebar Overlay -->
+  <div id="mobile_sidebar_overlay" class="fixed inset-0 bg-brand-dark/50 z-40 md:hidden hidden transition-opacity duration-300" onclick="toggleMobileSidebar()"></div>
+
+  <!-- Left Sidebar Layout -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 bg-brand-dark text-white w-64 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-50 flex flex-col justify-between border-r border-slate-800">
+    <div>
+      <!-- Header / Logo -->
+      <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+        <div class="h-8 w-8 rounded bg-brand-green flex items-center justify-center text-white">
+          <i data-lucide="shopping-bag" class="h-4 w-4"></i>
+        </div>
+        <div>
+          <h2 class="font-bold tracking-tight text-sm uppercase">Ganga Maxx</h2>
+          <p class="text-[10px] text-brand-green font-semibold tracking-wider">ADMIN PORTAL</p>
+        </div>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-160px)]">
+        <button onclick="switchSection('overview')" id="nav_overview" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="home" class="h-4 w-4 text-brand-green"></i>
+            Overview
+          </span>
+        </button>
+
+        <button onclick="switchSection('staff')" id="nav_staff" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="bell" class="h-4 w-4 text-brand-green"></i>
+            Staff Approvals
+          </span>
+          <span id="pending_staff_badge" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-brand-error text-white font-bold">0</span>
+        </button>
+
+        <button onclick="switchSection('customers')" id="nav_customers" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="users" class="h-4 w-4 text-brand-green"></i>
+            Customer Management
+          </span>
+        </button>
+
+        <button onclick="switchSection('products')" id="nav_products" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="package" class="h-4 w-4 text-brand-green"></i>
+            Product Management
+          </span>
+        </button>
+
+        <button onclick="switchSection('whatsapp')" id="nav_whatsapp" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="message-square" class="h-4 w-4 text-brand-green"></i>
+            WhatsApp Logs
+          </span>
+        </button>
+
+        <button onclick="switchSection('orders')" id="nav_orders" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="file-text" class="h-4 w-4 text-brand-green"></i>
+            All Orders
+          </span>
+        </button>
+
+        <button onclick="switchSection('quotations')" id="nav_quotations" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="file-signature" class="h-4 w-4 text-brand-green"></i>
+            Quotations
+          </span>
+        </button>
+
+        <button onclick="switchSection('inventory')" id="nav_inventory" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="archive" class="h-4 w-4 text-brand-green"></i>
+            Inventory
+          </span>
+        </button>
+
+        <button onclick="switchSection('credit')" id="nav_credit" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="credit-card" class="h-4 w-4 text-brand-green"></i>
+            Credit Accounts
+          </span>
+        </button>
+
+        <button onclick="switchSection('compliance')" id="nav_compliance" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="shield" class="h-4 w-4 text-brand-green"></i>
+            Compliance Records
+          </span>
+        </button>
+
+        <button onclick="switchSection('reports')" id="nav_reports" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300">
+          <span class="flex items-center gap-3">
+            <i data-lucide="bar-chart-2" class="h-4 w-4 text-brand-green"></i>
+            Reports
+          </span>
+        </button>
+      
+        <button onclick="switchSection('assistant')" id="nav_assistant" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300 mt-4 border border-slate-800">
+          <span class="flex items-center gap-3">
+            <i data-lucide="bot" class="h-4 w-4 text-brand-green"></i>
+            Talk to AI Assistant
+          </span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Admin Profile & Logout -->
+    <div class="p-4 border-t border-slate-800 flex flex-col gap-3 bg-slate-950/40">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-full bg-brand-green/20 text-brand-green flex items-center justify-center font-bold text-sm" id="admin_avatar">
+          AD
+        </div>
+        <div class="truncate">
+          <h4 class="text-xs font-bold text-slate-100" id="admin_name">Administrator</h4>
+          <span class="text-[10px] text-slate-400 truncate block" id="admin_email">admin@gangamaxx.com</span>
+        </div>
+      </div>
+      <button onclick="window.handleLogout()" class="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-md font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors">
+        <i data-lucide="log-out" class="h-3.5 w-3.5"></i>
+        Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Layout -->
+  <div class="flex-1 flex flex-col md:pl-64 min-w-0 min-h-screen">
+    
+    <!-- Top Bar -->
+    <header class="h-16 border-b border-brand-border bg-white flex items-center justify-between px-6 z-30">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleMobileSidebar()" class="p-2 -ml-2 text-brand-text-dark hover:bg-slate-100 rounded-md md:hidden">
+          <i data-lucide="menu" class="h-5 w-5"></i>
+        </button>
+        <div class="hidden sm:flex items-center gap-2 text-xs text-brand-text-muted">
+          <span>Ganga Maxx B2B Marketplace</span>
+          <i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
+          <span class="font-semibold text-brand-text-dark capitalize" id="current_breadcrumb">Overview</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Live Indicator Removed -->
+
+        <!-- Header Profile & Logout -->
+        <div class="flex items-center gap-3 border-l pl-4 border-slate-200">
+          <div class="h-8 w-8 rounded-full bg-brand-green/10 text-brand-green flex items-center justify-center font-bold text-xs border border-brand-green/20" id="header_admin_avatar">
+            AD
+          </div>
+          <button onclick="window.handleLogout()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md font-semibold text-rose-600 hover:bg-rose-50 transition-colors" id="header_logout_btn">
+            <i data-lucide="log-out" class="h-3.5 w-3.5"></i>
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Workspace -->
+    <main class="flex-1 overflow-y-auto p-6 space-y-6 max-h-[calc(100vh-64px)]">
+      
+      <!-- ================= SECTION 1: OVERVIEW ================= -->
+      <section id="section_overview" class="space-y-6">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-brand-dark">Enterprise Overview</h1>
+          <p class="text-sm text-brand-text-muted mt-1">Real-time business performance metrics and alerts.</p>
+        </div>
+
+        <!-- Metric Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <!-- Total Customers -->
+          <div class="card p-4 flex flex-col justify-between gap-3 border-l-4 border-l-rose-500">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-bold text-brand-text-muted uppercase">Total Customers</span>
+              <div class="p-1.5 rounded bg-blue-50 text-blue-600">
+                <i data-lucide="users" class="h-4 w-4"></i>
+              </div>
+            </div>
+            <div>
+              <h3 id="stat_customers" class="text-2xl font-bold tracking-tight text-brand-dark">0</h3>
+              <p class="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                <i data-lucide="trending-up" class="inline h-3 w-3 mr-0.5"></i>+8.3% from last month
+              </p>
+            </div>
+          </div>
+
+          <!-- Pending Staff -->
+          <div class="card p-4 flex flex-col justify-between gap-3 border-l-4 border-l-rose-500">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-bold text-brand-text-muted uppercase">Pending Staff</span>
+              <div class="p-1.5 rounded bg-rose-50 text-rose-600">
+                <i data-lucide="bell" class="h-4 w-4"></i>
+              </div>
+            </div>
+            <div>
+              <h3 id="stat_pending_staff" class="text-2xl font-bold tracking-tight text-brand-dark">0</h3>
+              <p class="text-[10px] text-brand-text-muted mt-0.5">Requires manual approval</p>
+            </div>
+          </div>
+
+          <!-- Active Orders -->
+          <div class="card p-4 flex flex-col justify-between gap-3 border-l-4 border-l-rose-500">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-bold text-brand-text-muted uppercase">Active Orders</span>
+              <div class="p-1.5 rounded bg-emerald-50 text-brand-green">
+                <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+              </div>
+            </div>
+            <div>
+              <h3 id="stat_active_orders" class="text-2xl font-bold tracking-tight text-brand-dark">0</h3>
+              <p class="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                <i data-lucide="trending-up" class="inline h-3 w-3 mr-0.5"></i>+12.4% from last month
+              </p>
+            </div>
+          </div>
+
+          <!-- Total Products -->
+          <div class="card p-4 flex flex-col justify-between gap-3 border-l-4 border-l-rose-500">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-bold text-brand-text-muted uppercase">Total Products</span>
+              <div class="p-1.5 rounded bg-purple-50 text-purple-600">
+                <i data-lucide="package" class="h-4 w-4"></i>
+              </div>
+            </div>
+            <div>
+              <h3 id="stat_total_products" class="text-2xl font-bold tracking-tight text-brand-dark">0</h3>
+              <p class="text-[10px] text-brand-text-muted mt-0.5">Catalog units managed</p>
+            </div>
+          </div>
+
+          <!-- Total Revenue -->
+          <div class="card p-4 flex flex-col justify-between gap-3 border-l-4 border-l-rose-500">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-bold text-brand-text-muted uppercase">Revenue (Month)</span>
+              <div class="p-1.5 rounded bg-amber-50 text-amber-600">
+                <i data-lucide="indian-rupee" class="h-4 w-4"></i>
+              </div>
+            </div>
+            <div>
+              <h3 id="stat_revenue" class="text-2xl font-bold tracking-tight text-brand-dark">₹0</h3>
+              <p class="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                <i data-lucide="trending-up" class="inline h-3 w-3 mr-0.5"></i>+15.1% vs last month
+              </p>
+            </div>
+          </div>
+
+          <!-- Overdue Credit Accounts -->
+          <div class="card p-4 flex flex-col justify-between gap-3 border-l-4 border-l-rose-500">
+            <div class="flex justify-between items-start">
+              <span class="text-xs font-bold text-brand-text-muted uppercase">Overdue Credit</span>
+              <div class="p-1.5 rounded bg-yellow-50 text-yellow-600">
+                <i data-lucide="credit-card" class="h-4 w-4"></i>
+              </div>
+            </div>
+            <div>
+              <h3 id="stat_overdue_credit" class="text-2xl font-bold tracking-tight text-brand-dark">0</h3>
+              <p class="text-[10px] text-rose-500 font-semibold mt-0.5">Requires audit</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Redesigned Widgets Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- WIDGET 1: Recent Orders (Spans both columns) -->
+          <div class="card p-6 flex flex-col justify-between gap-4 lg:col-span-2">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-brand-green">Recent Orders</h3>
+              <span class="text-xs text-brand-text-muted">Last 5 transactions</span>
+            </div>
+            <div class="overflow-x-auto" id="widget_recent_orders_container">
+              <!-- Rendered Dynamically -->
+            </div>
+            <div class="flex justify-end mt-2">
+              <button onclick="switchSection('orders')" class="text-brand-green hover:text-brand-hover text-xs font-semibold flex items-center gap-1 transition-colors">
+                View All Orders &rarr;
+              </button>
+            </div>
+          </div>
+
+          <!-- WIDGET 3: Low Stock Alerts (Left Column) -->
+          <div class="card p-6 flex flex-col justify-between gap-4">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+              <div class="flex items-center gap-2">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-brand-green">Low Stock Alerts</h3>
+                <span id="widget_low_stock_badge" class="hidden px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700">0</span>
+              </div>
+              <span class="text-xs text-brand-text-muted">Stock &le; Reorder level</span>
+            </div>
+            <div class="overflow-x-auto min-h-[220px]" id="widget_low_stock_container">
+              <!-- Rendered Dynamically -->
+            </div>
+          </div>
+
+          <!-- WIDGET 2: Quick Staff Approvals (Right Column) -->
+          <div class="card p-6 flex flex-col justify-between gap-4">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-brand-green">Quick Staff Approvals</h3>
+              <span class="text-xs text-brand-text-muted">Pending staff registrations</span>
+            </div>
+            <div class="overflow-y-auto max-h-[300px] min-h-[220px]" id="widget_staff_approvals_container">
+              <!-- Rendered Dynamically -->
+            </div>
+          </div>
+
+          <!-- WIDGET 5: Today's Deliveries (Left Column) -->
+          <div class="card p-6 flex flex-col justify-between gap-4">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+              <div class="flex items-center gap-2">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-brand-green">Today's Deliveries</h3>
+                <span id="widget_deliveries_badge" class="hidden px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-700">0</span>
+              </div>
+              <span class="text-xs text-brand-text-muted">Logistics tracking</span>
+            </div>
+            <div class="overflow-y-auto max-h-[300px] min-h-[220px]" id="widget_deliveries_container">
+              <!-- Rendered Dynamically -->
+            </div>
+          </div>
+
+          <!-- WIDGET 4: Overdue Credit Accounts (Right Column) -->
+          <div class="card p-6 flex flex-col justify-between gap-4">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+              <div class="flex items-center gap-2">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-brand-green">Overdue Credit Accounts</h3>
+                <span id="widget_overdue_badge" class="hidden px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700">&nbsp;</span>
+              </div>
+              <span class="text-xs text-brand-text-muted">Outstanding reminders</span>
+            </div>
+            <div class="overflow-y-auto max-h-[300px] min-h-[220px]" id="widget_overdue_credit_container">
+              <!-- Rendered Dynamically -->
+            </div>
+          </div>
+
+          <!-- WIDGET 6: Revenue Chart (Spans both columns) -->
+          <div class="card p-6 flex flex-col justify-between gap-4 lg:col-span-2">
+            <div class="flex justify-between items-center border-b border-brand-border pb-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-brand-green">Revenue Trend &mdash; Last 6 Months</h3>
+              <span class="text-xs text-brand-text-muted">Completed sales trend</span>
+            </div>
+            <div class="h-64 relative" id="widget_revenue_chart_wrapper">
+              <canvas id="revenueTrendChart"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+
+      <!-- ================= SECTION 2: STAFF APPROVALS ================= -->
+      <section id="section_staff" class="space-y-6 hidden">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-brand-dark">Staff Access Approvals</h1>
+            <p class="text-sm text-brand-text-muted mt-1">Review, approve, or reject access requests from internal operations employees.</p>
+          </div>
+        </div>
+
+        <div class="card p-0 overflow-hidden border border-brand-border">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-brand-dark text-white text-xs font-semibold uppercase tracking-wider">
+                  <th class="p-4">Staff Member</th>
+                  <th class="p-4">Sub Role Requested</th>
+                  <th class="p-4">Email</th>
+                  <th class="p-4">WhatsApp Contact</th>
+                  <th class="p-4">Submitted On</th>
+                  <th class="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="staff_table_body" class="divide-y divide-brand-border text-sm">
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-brand-text-muted">
+                    No pending staff registration requests found.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= SECTION 3: CUSTOMER MANAGEMENT ================= -->
+      <section id="section_customers" class="space-y-6 hidden">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-brand-dark">Customer Profiles</h1>
+            <p class="text-sm text-brand-text-muted mt-1">Audit enterprise accounts, shipping details, and outstanding credit status.</p>
+          </div>
+        </div>
+
+        <!-- Filters Block -->
+        <div class="card p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="customer_search" class="form-label text-xs">Search Customer or Institution</label>
+            <input type="text" id="customer_search" oninput="filterCustomers()" class="form-input py-2 text-sm" placeholder="Search by name, email, phone...">
+          </div>
+          <div>
+            <label for="customer_type_filter" class="form-label text-xs">Institution Type</label>
+            <select id="customer_type_filter" onchange="filterCustomers()" class="form-input py-2 text-sm">
+              <option value="All">All Types</option>
+              <option value="School">School</option>
+              <option value="College">College</option>
+              <option value="Hospital">Hospital</option>
+              <option value="Hotel">Hotel</option>
+              <option value="Office">Office</option>
+              <option value="Housekeeping Vendor">Housekeeping Vendor</option>
+              <option value="Government Body">Government Body</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="customer_status_filter" class="form-label text-xs">Account Status</label>
+            <select id="customer_status_filter" onchange="filterCustomers()" class="form-input py-2 text-sm">
+              <option value="All">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Customer List Table -->
+        <div class="card p-0 overflow-hidden border border-brand-border">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-brand-dark text-white text-xs font-semibold uppercase tracking-wider">
+                  <th class="p-4">Customer Name</th>
+                  <th class="p-4">Institution Name</th>
+                  <th class="p-4">Institution Type</th>
+                  <th class="p-4">Email</th>
+                  <th class="p-4">Phone</th>
+                  <th class="p-4">Status</th>
+                  <th class="p-4 text-center">Orders</th>
+                  <th class="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="customers_table_body" class="divide-y divide-brand-border text-sm">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= SECTION 4: PRODUCT MANAGEMENT ================= -->
+      <section id="section_products" class="space-y-6 hidden">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-brand-dark">Enterprise Catalog</h1>
+            <p class="text-sm text-brand-text-muted mt-1">Manage wholesale pricing tiers, min order caps, and master catalog files.</p>
+          </div>
+          <button onclick="openProductDrawer()" class="btn-secondary py-2 px-4 text-xs font-semibold flex items-center gap-2">
+            <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+            Add New Product
+          </button>
+        </div>
+
+        <!-- Products List Table -->
+        <div class="card p-0 overflow-hidden border border-brand-border">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-brand-dark text-white text-xs font-semibold uppercase tracking-wider">
+                  <th class="p-4">Product Name</th>
+                  <th class="p-4">SKU Code</th>
+                  <th class="p-4">Category</th>
+                  <th class="p-4">Base Pricing</th>
+                  <th class="p-4 text-center">Min Order Qty</th>
+                  <th class="p-4 text-center">Current Stock</th>
+                  <th class="p-4">Status</th>
+                  <th class="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="products_table_body" class="divide-y divide-brand-border text-sm">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= SECTION 5: ALL ORDERS ================= -->
+      <section id="section_orders" class="space-y-6 hidden">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-brand-dark">Commercial Purchase Log</h1>
+            <p class="text-sm text-brand-text-muted mt-1">Audit institutional bulk order pipelines, package states, and invoices.</p>
+          </div>
+        </div>
+
+        <!-- Order Filters -->
+        <div class="card p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label for="order_status_filter" class="form-label text-xs">Pipeline Status</label>
+            <select id="order_status_filter" onchange="filterOrders()" class="form-input py-2 text-sm">
+              <option value="All">All Statuses</option>
+              <option value="pending">Pending Approval</option>
+              <option value="approved">Approved</option>
+              <option value="packed">Packed</option>
+              <option value="dispatched">Dispatched</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div>
+            <label for="order_date_start" class="form-label text-xs">Start Date</label>
+            <input type="date" id="order_date_start" onchange="filterOrders()" class="form-input py-2 text-sm">
+          </div>
+          <div>
+            <label for="order_date_end" class="form-label text-xs">End Date</label>
+            <input type="date" id="order_date_end" onchange="filterOrders()" class="form-input py-2 text-sm">
+          </div>
+          <div>
+            <label for="order_customer_search" class="form-label text-xs">Customer Search</label>
+            <input type="text" id="order_customer_search" oninput="filterOrders()" class="form-input py-2 text-sm" placeholder="Name or Institution...">
+          </div>
+        </div>
+
+        <!-- Orders List Table -->
+        <div class="card p-0 overflow-hidden border border-brand-border">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-brand-dark text-white text-xs font-semibold uppercase tracking-wider">
+                  <th class="p-4">Order ID</th>
+                  <th class="p-4">Customer Name</th>
+                  <th class="p-4">Institution</th>
+                  <th class="p-4 text-center">Items Count</th>
+                  <th class="p-4 text-right">Total Billing</th>
+                  <th class="p-4">Status</th>
+                  <th class="p-4">Date Submitted</th>
+                  <th class="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="orders_table_body" class="divide-y divide-brand-border text-sm">
+                <!-- Loaded dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ================= SECTION 6: PLACEHOLDERS (QUOTATIONS, INVENTORY, CREDIT, COMPLIANCE) ================= -->
+      <section id="section_quotations" class="space-y-6 hidden">
+        <div class="card text-center p-12">
+          <div class="h-14 w-14 rounded-full bg-slate-100 flex items-center justify-center text-brand-green mx-auto mb-4">
+            <i data-lucide="file-signature" class="h-6 w-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-brand-dark">Quotations Registry Coming Soon</h2>
+          <p class="text-sm text-brand-text-muted mt-2 max-w-md mx-auto">
+            Integrates wholesale pricing calculations and allows admins to audit custom procurement quotations submitted by institutional customer accounts.
+          </p>
+        </div>
+      </section>
+
+      <section id="section_inventory" class="space-y-6 hidden">
+        <div class="card text-center p-12">
+          <div class="h-14 w-14 rounded-full bg-slate-100 flex items-center justify-center text-brand-green mx-auto mb-4">
+            <i data-lucide="archive" class="h-6 w-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-brand-dark">Live Inventory Logs</h2>
+          <p class="text-sm text-brand-text-muted mt-2 max-w-md mx-auto">
+            Real-time warehouse tracking logs and automated re-order alert triggers will map securely into this workspace view.
+          </p>
+        </div>
+      </section>
+
+      <section id="section_credit" class="space-y-6 hidden">
+        <div class="card text-center p-12">
+          <div class="h-14 w-14 rounded-full bg-slate-100 flex items-center justify-center text-brand-green mx-auto mb-4">
+            <i data-lucide="credit-card" class="h-6 w-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-brand-dark">Corporate Credit Ledgers</h2>
+          <p class="text-sm text-brand-text-muted mt-2 max-w-md mx-auto">
+            Audit credit limits, interest charges, overdue accounts, and payment tracking for verified commercial buyers.
+          </p>
+        </div>
+      </section>
+
+      <section id="section_compliance" class="space-y-6 hidden">
+        <div class="card text-center p-12">
+          <div class="h-14 w-14 rounded-full bg-slate-100 flex items-center justify-center text-brand-green mx-auto mb-4">
+            <i data-lucide="shield" class="h-6 w-6"></i>
+          </div>
+          <h2 class="text-xl font-bold text-brand-dark">Compliance Records</h2>
+          <p class="text-sm text-brand-text-muted mt-2 max-w-md mx-auto">
+            Store and audit tax filings, business licenses, food security certificates, and legal commercial registration paperwork.
+          </p>
+        </div>
+      </section>
+
+
+      <!-- ================= SECTION 7: REPORTS & EXPORTS ================= -->
+      <section id="section_reports" class="space-y-6 hidden">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-brand-dark">Enterprise CSV Reports</h1>
+          <p class="text-sm text-brand-text-muted mt-1">Download raw spreadsheet records for compliance auditing, financial filing, and sales metrics.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Orders CSV -->
+          <div class="card p-6 flex flex-col justify-between items-start gap-4 bg-white">
+            <div>
+              <div class="p-3 rounded-lg bg-emerald-50 text-brand-green mb-3 inline-block">
+                <i data-lucide="file-spreadsheet" class="h-6 w-6"></i>
+              </div>
+              <h3 class="text-lg font-bold text-brand-dark">All Orders Ledger CSV</h3>
+              <p class="text-xs text-brand-text-muted mt-1">
+                Full list of purchases containing customer profiles, item pricing, taxes, date metrics, and billing.
+              </p>
+            </div>
+            <button onclick="exportOrdersCSV()" class="btn-primary w-full text-xs font-semibold flex items-center justify-center gap-2">
+              <i data-lucide="download" class="h-3.5 w-3.5"></i>
+              Download Orders CSV
+            </button>
+          </div>
+
+          <!-- Customers CSV -->
+          <div class="card p-6 flex flex-col justify-between items-start gap-4 bg-white">
+            <div>
+              <div class="p-3 rounded-lg bg-blue-50 text-blue-600 mb-3 inline-block">
+                <i data-lucide="users" class="h-6 w-6"></i>
+              </div>
+              <h3 class="text-lg font-bold text-brand-dark">Customer Directory CSV</h3>
+              <p class="text-xs text-brand-text-muted mt-1">
+                Complete institutional list containing shipping addresses, types, contact details, and dates.
+              </p>
+            </div>
+            <button onclick="exportCustomersCSV()" class="btn-primary w-full text-xs font-semibold flex items-center justify-center gap-2">
+              <i data-lucide="download" class="h-3.5 w-3.5"></i>
+              Download Customer List CSV
+            </button>
+          </div>
+
+          <!-- Credit Aging CSV -->
+          <div class="card p-6 flex flex-col justify-between items-start gap-4 bg-white">
+            <div>
+              <div class="p-3 rounded-lg bg-amber-50 text-amber-600 mb-3 inline-block">
+                <i data-lucide="clock" class="h-6 w-6"></i>
+              </div>
+              <h3 class="text-lg font-bold text-brand-dark">Credit Aging Ledger CSV</h3>
+              <p class="text-xs text-brand-text-muted mt-1">
+                Full list of active customer credit structures, outstanding margins, and warning status flags.
+              </p>
+            </div>
+            <button onclick="exportCreditAgingCSV()" class="btn-primary w-full text-xs font-semibold flex items-center justify-center gap-2">
+              <i data-lucide="download" class="h-3.5 w-3.5"></i>
+              Download Credit Aging Report CSV
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SECTION: WHATSAPP LOGS ================= -->
+      <section id="section_whatsapp" class="space-y-6 hidden">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold tracking-tight text-brand-dark">WhatsApp Notification Logs</h1>
+            <p class="text-sm text-brand-text-muted mt-1">Audit automatically transmitted B2B commercial notifications, OTP codes, and compliance alerts.</p>
+          </div>
+          <button onclick="exportWhatsappLogsToCSV()" class="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-green/90 transition-colors shadow-sm">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            Export Logs CSV
+          </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm flex flex-wrap gap-4 items-end">
+          <div class="w-full sm:w-auto">
+            <label class="block text-xs font-semibold text-brand-text-muted mb-1">Trigger Type</label>
+            <select id="whatsapp_filter_trigger" onchange="filterWhatsappLogs()" class="border border-brand-border rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-green bg-slate-50 w-full sm:w-48">
+              <option value="ALL">All Triggers</option>
+              <option value="OTP_RESET">OTP Reset</option>
+              <option value="ORDER_PLACED">Order Placed</option>
+              <option value="ORDER_APPROVED">Order Approved</option>
+              <option value="ORDER_PACKED">Order Packed</option>
+              <option value="ORDER_DISPATCHED">Order Dispatched</option>
+              <option value="ORDER_DELIVERED">Order Delivered</option>
+              <option value="STAFF_APPROVED">Staff Approved</option>
+              <option value="STAFF_REJECTED">Staff Rejected</option>
+              <option value="REORDER_REMINDER">Reorder Reminder</option>
+              <option value="PAYMENT_DUE">Payment Due</option>
+              <option value="COMPLIANCE_REMINDER">Compliance Reminder</option>
+            </select>
+          </div>
+          <div class="w-full sm:w-auto">
+            <label class="block text-xs font-semibold text-brand-text-muted mb-1">Date From</label>
+            <input type="date" id="whatsapp_filter_date_from" onchange="filterWhatsappLogs()" class="border border-brand-border rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-green bg-slate-50 w-full">
+          </div>
+          <div class="w-full sm:w-auto">
+            <label class="block text-xs font-semibold text-brand-text-muted mb-1">Date To</label>
+            <input type="date" id="whatsapp_filter_date_to" onchange="filterWhatsappLogs()" class="border border-brand-border rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-green bg-slate-50 w-full">
+          </div>
+          <button onclick="clearWhatsappFilters()" class="bg-slate-100 hover:bg-slate-200 text-brand-text-dark px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto">
+            Reset Filters
+          </button>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="bg-white border border-brand-border rounded-xl shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 border-b border-brand-border text-xs font-semibold text-brand-text-muted uppercase tracking-wider">
+                <tr>
+                  <th class="px-6 py-4">Timestamp</th>
+                  <th class="px-6 py-4">To</th>
+                  <th class="px-6 py-4">Trigger</th>
+                  <th class="px-6 py-4">Message Preview</th>
+                  <th class="px-6 py-4">Sent By</th>
+                </tr>
+              </thead>
+              <tbody id="whatsapp_logs_table_body" class="divide-y divide-brand-border">
+                <tr>
+                  <td colspan="5" class="px-6 py-8 text-center text-brand-text-muted">Loading logs...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SECTION: AI ASSISTANT ================= -->
+      <section id="section_assistant" class="space-y-6 hidden flex flex-col h-[calc(100vh-14rem)] min-h-[500px]">
+        <div class="shrink-0">
+          <h1 class="text-2xl font-bold tracking-tight text-brand-dark">AI Portal Assistant</h1>
+          <p class="text-sm text-brand-text-muted mt-1">Converse with the Ganga Maxx AI agent to run diagnostics, query system structures, or find helper tips.</p>
+        </div>
+
+        <div class="flex-1 bg-slate-50 rounded-xl border border-brand-border flex flex-col overflow-hidden min-h-[400px]">
+          <!-- Chat Messages -->
+          <div id="admin_chat_messages" class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4">
+            <!-- Initial Greeting -->
+            <div class="flex items-end gap-2 max-w-[85%] sm:max-w-2xl">
+              <div class="w-8 h-8 rounded-full bg-brand-green/10 flex items-center justify-center shrink-0">
+                <i data-lucide="bot" class="w-4 h-4 text-brand-green"></i>
+              </div>
+              <div class="bg-white border border-brand-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm text-sm text-brand-text-dark leading-relaxed">Hi! I'm the Ganga Maxx AI Assistant. I know everything about the B2B portal, orders, quotations, and staff roles. How can I help you today?</div>
+            </div>
+
+            <!-- Suggested Questions -->
+            <div class="pl-10 flex flex-wrap gap-2 mt-2" id="admin_suggested_questions">
+              <button class="bg-white border border-brand-green/30 text-brand-green hover:bg-brand-green hover:text-white px-3 py-1.5 rounded-full text-xs font-medium transition-colors" onclick="sendAdminSuggested('How do I approve a staff member?')">How do I approve a staff member?</button>
+              <button class="bg-white border border-brand-green/30 text-brand-green hover:bg-brand-green hover:text-white px-3 py-1.5 rounded-full text-xs font-medium transition-colors" onclick="sendAdminSuggested('How do I manage customer credit accounts?')">How do I manage customer credit accounts?</button>
+              <button class="bg-white border border-brand-green/30 text-brand-green hover:bg-brand-green hover:text-white px-3 py-1.5 rounded-full text-xs font-medium transition-colors" onclick="sendAdminSuggested('What is the flow of an order?')">What is the flow of an order?</button>
+              <button class="bg-white border border-brand-green/30 text-brand-green hover:bg-brand-green hover:text-white px-3 py-1.5 rounded-full text-xs font-medium transition-colors" onclick="sendAdminSuggested('How do I download reports?')">How do I download reports?</button>
+            </div>
+          </div>
+
+          <!-- Typing Indicator -->
+          <div class="px-6 pb-2 hidden shrink-0" id="admin_typing_indicator">
+            <div class="flex items-center gap-2 text-brand-text-muted text-xs font-medium bg-white/50 w-fit px-3 py-1.5 rounded-full border border-brand-border/40">
+              <div class="flex space-x-1">
+                <div class="w-1.5 h-1.5 bg-brand-green/60 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                <div class="w-1.5 h-1.5 bg-brand-green/60 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                <div class="w-1.5 h-1.5 bg-brand-green/60 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+              </div>
+              <span>Assistant is typing...</span>
+            </div>
+          </div>
+
+          <!-- Input Area -->
+          <div class="bg-white border-t border-brand-border p-4 shrink-0">
+            <form id="admin_chat_form" onsubmit="handleAdminChatSubmit(event)" class="flex items-end gap-2 relative">
+              <textarea 
+                id="admin_chat_input" 
+                rows="1" 
+                class="w-full bg-brand-light border border-brand-border rounded-xl px-4 py-3 pr-12 text-sm outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green resize-none overflow-hidden" 
+                placeholder="Type your message here..."
+                oninput="this.style.height = ''; this.style.height = Math.min(this.scrollHeight, 120) + 'px';"
+                style="min-height: 46px;"
+              ></textarea>
+              <button type="submit" class="absolute right-2 bottom-2 bg-brand-green text-white p-1.5 rounded-lg hover:bg-brand-green/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" id="admin_send_btn">
+                <i data-lucide="send" class="w-5 h-5"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= DIALOGS & OVERLAYS ================= -->
+
+  <!-- Slide-in Drawer: Add/Edit Product -->
+  <div id="product_drawer" class="fixed inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out border-l border-brand-border flex flex-col justify-between">
+    <div class="p-6 overflow-y-auto h-full space-y-6">
+      <div class="flex justify-between items-center border-b border-brand-border pb-4">
+        <h2 id="product_drawer_title" class="text-lg font-bold text-brand-dark">Add New Catalog Product</h2>
+        <button onclick="closeProductDrawer()" class="p-1 rounded hover:bg-slate-100 text-brand-text-muted">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+
+      <form id="product_form" onsubmit="handleProductSubmit(event)" class="space-y-4">
+        <input type="hidden" id="product_id">
+        
+        <div>
+          <label for="prod_name" class="form-label text-xs">Product Title</label>
+          <input type="text" id="prod_name" class="form-input text-sm" placeholder="e.g. Premium Floor Cleaner 5L" required>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="prod_sku" class="form-label text-xs">SKU Code</label>
+            <input type="text" id="prod_sku" class="form-input text-sm" placeholder="SKU-CLEAN-5L" required>
+          </div>
+          <div>
+            <label for="prod_category" class="form-label text-xs">Category</label>
+            <select id="prod_category" class="form-input text-sm py-2" required>
+              <option value="" disabled selected>Category...</option>
+              <option value="Cleaning Chemicals">Cleaning Chemicals</option>
+              <option value="Housekeeping Consumables">Housekeeping Consumables</option>
+              <option value="Safety & PPE">Safety & PPE</option>
+              <option value="Disposables">Disposables</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="prod_desc" class="form-label text-xs">Description</label>
+          <textarea id="prod_desc" class="form-input text-sm" rows="3" placeholder="Description of the item..." required></textarea>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label for="prod_unit" class="form-label text-xs">Sales Unit</label>
+            <input type="text" id="prod_unit" class="form-input text-sm" placeholder="Can / Pack" required>
+          </div>
+          <div>
+            <label for="prod_price" class="form-label text-xs">Price Per Unit</label>
+            <input type="number" id="prod_price" class="form-input text-sm" placeholder="550" required min="1" step="any">
+          </div>
+          <div>
+            <label for="prod_min_qty" class="form-label text-xs">Min Order Qty</label>
+            <input type="number" id="prod_min_qty" class="form-input text-sm" placeholder="5" required min="1">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="prod_stock" class="form-label text-xs">Stock Level</label>
+            <input type="number" id="prod_stock" class="form-input text-sm" placeholder="100" required min="0">
+          </div>
+          <div class="flex items-center gap-2 pt-8">
+            <input type="checkbox" id="prod_active" class="h-4 w-4 text-brand-green border-brand-border rounded focus:ring-brand-green" checked>
+            <label for="prod_active" class="text-sm font-semibold text-brand-dark">Catalog Active</label>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4 border-t border-brand-border">
+          <button type="button" onclick="closeProductDrawer()" class="btn-outline w-1/2 text-xs py-2">Cancel</button>
+          <button type="submit" class="btn-secondary w-1/2 text-xs py-2">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Overlay for Generic Prompts/Drawers -->
+  <div id="modal_overlay" class="modal-overlay">
+    <!-- Modal Dialog (Rejection Reason) -->
+    <div id="reject_reason_modal" class="card max-w-md w-full bg-white hidden p-6 space-y-4">
+      <h3 class="text-lg font-bold text-brand-dark">Specify Rejection Reason</h3>
+      <p class="text-xs text-brand-text-muted">Enter a clear reason why this staff member request is being denied. They will receive this feedback via WhatsApp.</p>
+      
+      <textarea id="rejection_reason_text" class="form-input text-sm" rows="3" placeholder="Reason for rejection (e.g., Unofficial corporate email address, invalid contact detail)"></textarea>
+      
+      <div class="flex gap-3 justify-end pt-2">
+        <button onclick="closeModal()" class="btn-outline py-2 px-4 text-xs">Cancel</button>
+        <button onclick="confirmStaffRejection()" class="btn-primary bg-rose-600 hover:bg-rose-700 py-2 px-4 text-xs text-white">Reject Request & Notify</button>
+      </div>
+    </div>
+
+    <!-- Modal Dialog (Customer details) -->
+    <div id="customer_detail_modal" class="card max-w-xl w-full bg-white hidden p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-brand-border pb-3">
+        <h3 class="text-lg font-bold text-brand-dark">Update Customer Profile</h3>
+        <button onclick="closeModal()" class="text-brand-text-muted hover:text-brand-dark"><i data-lucide="x" class="h-5 w-5"></i></button>
+      </div>
+      
+      <div class="space-y-4 text-xs">
+        <input type="hidden" id="modal_cust_id">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-brand-text-muted font-medium block mb-1">Corporate Name:</label>
+            <input type="text" id="modal_cust_name_input" class="form-input text-sm font-bold">
+          </div>
+          <div>
+            <label class="text-brand-text-muted font-medium block mb-1">Corporate Email:</label>
+            <input type="email" id="modal_cust_email_input" class="form-input text-sm font-bold">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-brand-text-muted font-medium block mb-1">WhatsApp Phone:</label>
+            <input type="text" id="modal_cust_phone_input" class="form-input text-sm font-bold">
+          </div>
+          <div>
+            <label class="text-brand-text-muted font-medium block mb-1">Update Password:</label>
+            <input type="password" id="modal_cust_password_input" class="form-input text-sm font-bold" placeholder="New Password (blank to skip)">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 border-t border-brand-border pt-3">
+          <div>
+            <label class="text-brand-text-muted font-medium block mb-1">Institution:</label>
+            <input type="text" id="modal_cust_inst_input" class="form-input text-sm">
+          </div>
+          <div>
+            <label class="text-brand-text-muted font-medium block mb-1">Type:</label>
+            <input type="text" id="modal_cust_type_input" class="form-input text-sm">
+          </div>
+        </div>
+
+        <div class="border-t border-brand-border pt-3">
+          <label class="text-brand-text-muted font-medium block mb-1">Billing Address:</label>
+          <input type="text" id="modal_cust_address_input" class="form-input text-sm">
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 border-t border-brand-border pt-3">
+          <div>
+            <label class="text-brand-text-muted block mb-1">City:</label>
+            <input type="text" id="modal_cust_city_input" class="form-input text-sm">
+          </div>
+          <div>
+            <label class="text-brand-text-muted block mb-1">State:</label>
+            <input type="text" id="modal_cust_state_input" class="form-input text-sm">
+          </div>
+          <div>
+            <label class="text-brand-text-muted block mb-1">Pincode:</label>
+            <input type="text" id="modal_cust_pincode_input" class="form-input text-sm font-mono">
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-3 pt-3 border-t border-brand-border">
+        <button onclick="closeModal()" class="px-4 py-2 text-xs font-bold text-slate-400 hover:bg-slate-50 rounded">Cancel</button>
+        <button onclick="saveCustomerDetails()" class="btn-primary bg-brand-green py-2 px-6 text-xs text-white rounded font-bold shadow-md">Update Account</button>
+      </div>
+    </div>
+
+    <!-- Modal Dialog (Order Details / Invoice) -->
+    <div id="order_detail_modal" class="card max-w-2xl w-full bg-white hidden p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-brand-border pb-3">
+        <div>
+          <h3 class="text-lg font-bold text-brand-dark" id="modal_order_id">Order # -</h3>
+          <p class="text-[10px] text-brand-text-muted" id="modal_order_date">Submitted On: -</p>
+        </div>
+        <button onclick="closeModal()" class="text-brand-text-muted hover:text-brand-dark"><i data-lucide="x" class="h-5 w-5"></i></button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 text-xs">
+        <div>
+          <h4 class="font-bold text-brand-dark uppercase tracking-wider text-[10px] mb-1">Corporate Client</h4>
+          <p id="modal_order_cust_name" class="font-semibold text-brand-dark">-</p>
+          <p id="modal_order_cust_inst" class="text-brand-text-muted">-</p>
+          <p id="modal_order_cust_phone" class="text-brand-text-muted">-</p>
+        </div>
+        <div>
+          <h4 class="font-bold text-brand-dark uppercase tracking-wider text-[10px] mb-1">Shipping Logistics Address</h4>
+          <p id="modal_order_address" class="text-brand-text-muted leading-relaxed">-</p>
+        </div>
+      </div>
+
+      <!-- Live Pipeline Manager inside modal -->
+      <div class="border-t border-b border-brand-border py-3 grid grid-cols-2 items-center gap-4 text-xs">
+        <div>
+          <span class="text-brand-text-muted font-medium block">Order Logistics Pipeline State:</span>
+          <span id="modal_order_status_badge" class="mt-1 inline-block">-</span>
+        </div>
+        <div class="flex flex-col gap-1">
+          <label for="modal_update_status" class="font-bold text-brand-dark text-[10px]">UPDATE PIPELINE STAGE</label>
+          <select id="modal_update_status" class="form-input py-1.5 text-xs" onchange="updateOrderState()">
+            <option value="pending">Pending Approval</option>
+            <option value="approved">Approved</option>
+            <option value="packed">Packed</option>
+            <option value="dispatched">Dispatched</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Items Table -->
+      <div class="border border-brand-border rounded-lg overflow-hidden">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-brand-dark font-bold border-b border-brand-border">
+              <th class="p-3">Product Catalog Item</th>
+              <th class="p-3 text-center">Unit Price</th>
+              <th class="p-3 text-center">Qty</th>
+              <th class="p-3 text-right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody id="modal_order_items_body" class="divide-y divide-brand-border">
+            <!-- Loaded dynamically -->
+          </tbody>
+          <tfoot>
+            <tr class="bg-slate-50 font-bold border-t border-brand-border">
+              <td colspan="3" class="p-3 text-right uppercase tracking-wider text-[10px]">Total Invoice Billing:</td>
+              <td id="modal_order_grand_total" class="p-3 text-right text-sm text-brand-green">₹0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button onclick="closeModal()" class="btn-primary bg-brand-dark py-2 px-6 text-xs text-white">Close Invoice</button>
+      </div>
+    </div>
+
+    <!-- Modal Dialog (Quick Update Stock) -->
+    <div id="update_stock_modal" class="card max-w-md w-full bg-white hidden p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-brand-border pb-3">
+        <h3 class="text-lg font-bold text-brand-dark">Update Product Stock</h3>
+        <button onclick="closeModal()" class="text-brand-text-muted hover:text-brand-dark"><i data-lucide="x" class="h-5 w-5"></i></button>
+      </div>
+      
+      <form id="quick_stock_form" onsubmit="submitQuickStockUpdate(event)" class="space-y-4">
+        <input type="hidden" id="quick_stock_product_id">
+        
+        <div>
+          <label class="block text-xs font-semibold text-brand-text-muted uppercase mb-1">Product Title</label>
+          <div id="quick_stock_product_title" class="text-sm font-semibold text-brand-dark">-</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-brand-text-muted uppercase mb-1">SKU Code</label>
+            <div id="quick_stock_product_sku" class="text-xs font-mono text-brand-text-muted">-</div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-brand-text-muted uppercase mb-1">Current Stock</label>
+            <div id="quick_stock_current_display" class="text-xs font-bold text-brand-dark">-</div>
+          </div>
+        </div>
+
+        <div>
+          <label for="quick_stock_input" class="form-label text-xs">New Stock Quantity</label>
+          <input type="number" id="quick_stock_input" class="form-input text-sm" placeholder="e.g., 250" required min="0">
+        </div>
+
+        <div class="flex gap-3 justify-end pt-2 border-t border-brand-border">
+          <button type="button" onclick="closeModal()" class="btn-outline py-2 px-4 text-xs">Cancel</button>
+          <button type="submit" class="btn-primary py-2 px-4 text-xs text-white bg-brand-green hover:bg-brand-hover">Update Stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- Toast notification system -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300 bg-brand-dark text-white text-xs font-semibold px-4 py-3 rounded-lg shadow-2xl border border-slate-800 flex items-center gap-3">
+    <div id="toast_icon" class="text-brand-green">
+      <i data-lucide="check-circle" class="h-4 w-4"></i>
+    </div>
+    <span id="toast_msg">Status updated!</span>
+  </div>
+
+
+  <!-- ================= CORE CLIENT-SIDE ENGINE ================= -->
+  <script type="module">
+    import { exportOrdersCSV as extExportOrders, exportCustomersCSV as extExportCustomers, exportCreditAgingCSV as extExportCredit } from "/js/export.js";
+
+    import { auth, db } from '/firebase/firebaseConfig.js';
+    import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from 'firebase/auth';
+    import { collection, onSnapshot, doc, getDoc, updateDoc, deleteDoc, setDoc, getDocs, query, orderBy } from 'firebase/firestore';
+
+    // Global in-memory cache of Firestore records
+    let users = [];
+    let products = [];
+    let orders = [];
+    let deliveries = [];
+    let isDataLoaded = {
+      users: false,
+      products: false,
+      orders: false,
+      deliveries: false
+    };
+
+    // Pending Rejection Cache
+    let pendingRejectionUid = null;
+
+    // Toast alert triggers
+    window.showToast = function(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toast_msg');
+      const toastIcon = document.getElementById('toast_icon');
+
+      toastMsg.innerText = msg;
+      if (isError) {
+        toastIcon.innerHTML = `<i data-lucide="alert-circle" class="h-4 w-4 text-brand-error"></i>`;
+        toast.className = "fixed bottom-5 right-5 z-50 transform translate-y-0 opacity-100 bg-brand-dark text-white text-xs font-semibold px-4 py-3 rounded-lg shadow-2xl border border-slate-800 flex items-center gap-3 border-l-4 border-l-brand-error";
+      } else {
+        toastIcon.innerHTML = `<i data-lucide="check-circle" class="h-4 w-4 text-brand-success"></i>`;
+        toast.className = "fixed bottom-5 right-5 z-50 transform translate-y-0 opacity-100 bg-brand-dark text-white text-xs font-semibold px-4 py-3 rounded-lg shadow-2xl border border-slate-800 flex items-center gap-3 border-l-4 border-l-brand-success";
+      }
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.className = "fixed bottom-5 right-5 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300 bg-brand-dark text-white text-xs font-semibold px-4 py-3 rounded-lg shadow-2xl border border-slate-800 flex items-center gap-3";
+      }, 3500);
+    }
+
+    // Helper function to force clear and logout
+    function forceLogout() {
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('subRole');
+      signOut(auth).catch(() => {});
+      window.location.href = '/pages/login.html';
+    }
+
+    // Helper to ensure we have a valid ID token
+    let authResolve;
+    const authInitializedPromise = new Promise(resolve => { authResolve = resolve; });
+
+    async function getAdminToken() {
+      // Wait for auth to at least initialize once
+      await authInitializedPromise;
+
+      if (auth.currentUser) {
+        try {
+          return await auth.currentUser.getIdToken(true);
+        } catch (err) {
+          console.error("Error getting ID token:", err);
+        }
+      }
+      
+      // Fallback: use local storage UID if available (backend supports this for resilience)
+      const stored = localStorage.getItem('currentUser');
+      if (stored) {
+        try {
+          const user = JSON.parse(stored);
+          if (user.uid || user.id) {
+            console.warn("Auth session missing but local session found. Using local UID as fallback token.");
+            return user.uid || user.id;
+          }
+        } catch (e) {}
+      }
+      
+      throw new Error("Your session has expired or authentication is missing. Please log in again to perform this action.");
+    }
+
+    // Setup Snapshot Listeners
+    function setupRealTimeSync() {
+      // 1. Users real-time synchronization
+      onSnapshot(collection(db, 'users'), (snapshot) => {
+        users = [];
+        snapshot.forEach(doc => {
+          users.push({ id: doc.id, ...doc.data() });
+        });
+        isDataLoaded.users = true;
+        
+        // Recalculate and update views
+        updateDashboardMetrics();
+        renderStaffApprovalsTable();
+        filterCustomers();
+        logActivity("Users list updated from Firestore.");
+      }, (error) => {
+        console.error("Users listener error:", error);
+        isDataLoaded.users = true;
+        renderAllWidgets();
+      });
+
+      // 2. Products real-time synchronization
+      onSnapshot(collection(db, 'products'), (snapshot) => {
+        products = [];
+        snapshot.forEach(doc => {
+          products.push({ id: doc.id, ...doc.data() });
+        });
+        isDataLoaded.products = true;
+        
+        // Recalculate and update views
+        updateDashboardMetrics();
+        renderProductsTable();
+        logActivity("Products catalog list updated.");
+      }, (error) => {
+        console.error("Products listener error:", error);
+        isDataLoaded.products = true;
+        renderAllWidgets();
+      });
+
+      // 3. Orders real-time synchronization
+      onSnapshot(collection(db, 'orders'), (snapshot) => {
+        orders = [];
+        snapshot.forEach(doc => {
+          orders.push({ id: doc.id, ...doc.data() });
+        });
+        isDataLoaded.orders = true;
+        
+        // Recalculate and update views
+        updateDashboardMetrics();
+        filterOrders();
+        logActivity("Orders pipeline database updated.");
+      }, (error) => {
+        console.error("Orders listener error:", error);
+        isDataLoaded.orders = true;
+        renderAllWidgets();
+      });
+
+      // 4. Deliveries real-time logistics synchronization
+      onSnapshot(collection(db, 'deliveries'), (snapshot) => {
+        deliveries = [];
+        snapshot.forEach(doc => {
+          deliveries.push({ id: doc.id, ...doc.data() });
+        });
+        isDataLoaded.deliveries = true;
+        
+        // Refresh UI widgets
+        renderAllWidgets();
+        logActivity("Deliveries database updated.");
+      }, (error) => {
+        console.error("Deliveries listener error:", error);
+        isDataLoaded.deliveries = true;
+        renderAllWidgets();
+      });
+    }
+
+    // Logging for diagnostics (quiet console logs)
+    function logActivity(msg) {
+      console.log("[Activity]:", msg);
+    }
+
+    // Dynamic metrics calculators for Section 1
+    function updateDashboardMetrics() {
+      // Total customers
+      const totalCust = users.filter(u => u.role === 'customer').length;
+      document.getElementById('stat_customers').innerText = totalCust;
+
+      // Pending staff requests
+      const pendingSt = users.filter(u => u.role === 'staff' && u.status === 'pending').length;
+      document.getElementById('stat_pending_staff').innerText = pendingSt;
+      
+      // Update sidebar notification count badge
+      const badge = document.getElementById('pending_staff_badge');
+      if (pendingSt > 0) {
+        badge.innerText = pendingSt;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      // Active orders (pending, approved, packed, dispatched)
+      const activeOrd = orders.filter(o => ['pending', 'approved', 'packed', 'dispatched'].includes(o.status)).length;
+      document.getElementById('stat_active_orders').innerText = activeOrd;
+
+      // Total catalog products
+      document.getElementById('stat_total_products').innerText = products.length;
+
+      // Overdue credit accounts
+      const overdueCredit = users.filter(u => u.role === 'customer' && (u.creditStatus === 'overdue' || u.overdueAmount > 0)).length;
+      document.getElementById('stat_overdue_credit').innerText = overdueCredit;
+
+      // Revenue Calculation (This Month)
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0,0,0,0);
+      
+      let revenueSum = 0;
+      orders.forEach(ord => {
+        if (ord.status !== 'cancelled') {
+          const ordDate = ord.createdAt ? (ord.createdAt.toDate ? ord.createdAt.toDate() : new Date(ord.createdAt)) : null;
+          if (ordDate && ordDate >= startOfMonth) {
+            revenueSum += Number(ord.total || 0);
+          }
+        }
+      });
+      document.getElementById('stat_revenue').innerText = `₹${revenueSum.toLocaleString('en-IN')}`;
+
+      // Refresh Overview Redesigned Widgets
+      renderAllWidgets();
+    }
+
+    // Helper skeleton function
+    function getSkeletonHTML(rowsCount = 3) {
+      let rows = '';
+      for (let i = 0; i < rowsCount; i++) {
+        rows += `
+          <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 animate-pulse">
+            <div class="space-y-2 w-2/3">
+              <div class="h-4 bg-slate-200 rounded w-1/2"></div>
+              <div class="h-3 bg-slate-100 rounded w-5/6"></div>
+            </div>
+            <div class="h-6 bg-slate-200 rounded w-16"></div>
+          </div>
+        `;
+      }
+      return `<div class="p-4 space-y-2">${rows}</div>`;
+    }
+
+    // Main render-all router
+    window.renderAllWidgets = function() {
+      renderWidgetRecentOrders();
+      renderWidgetStaffApprovals();
+      renderWidgetLowStockAlerts();
+      renderWidgetOverdueCredit();
+      renderWidgetTodayDeliveries();
+      renderWidgetRevenueChart();
+    }
+
+    // Widget 1 Renderer: Recent Orders
+    function renderWidgetRecentOrders() {
+      const container = document.getElementById('widget_recent_orders_container');
+      if (!container) return;
+
+      if (!isDataLoaded.orders) {
+        container.innerHTML = getSkeletonHTML(4);
+        return;
+      }
+
+      if (orders.length === 0) {
+        container.innerHTML = `<div class="text-xs text-brand-text-muted p-6 text-center">No recent orders found.</div>`;
+        return;
+      }
+
+      // Sort by creation date descending
+      const sortedOrders = [...orders].sort((a, b) => {
+        const da = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)) : 0;
+        const db_date = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)) : 0;
+        return db_date - da;
+      });
+
+      const last5 = sortedOrders.slice(0, 5);
+
+      let html = `
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-brand-dark font-semibold border-b border-brand-border">
+              <th class="p-3">Order ID</th>
+              <th class="p-3">Customer Name</th>
+              <th class="p-3">Institution</th>
+              <th class="p-3 text-right">Amount</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Time</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-brand-border">
+      `;
+
+      last5.forEach(o => {
+        const timeStr = o.createdAt ? (o.createdAt.toDate ? o.createdAt.toDate().toLocaleDateString('en-IN') : new Date(o.createdAt).toLocaleDateString('en-IN')) : '-';
+        
+        let badgeClass = 'bg-slate-100 text-slate-800 border-slate-200';
+        if (o.status === 'pending') badgeClass = 'bg-yellow-50 text-yellow-800 border-yellow-200';
+        else if (o.status === 'approved') badgeClass = 'bg-blue-50 text-blue-800 border-blue-200';
+        else if (o.status === 'packed') badgeClass = 'bg-purple-50 text-purple-800 border-purple-200';
+        else if (o.status === 'dispatched') badgeClass = 'bg-orange-50 text-orange-800 border-orange-200';
+        else if (o.status === 'delivered') badgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+        else if (o.status === 'cancelled') badgeClass = 'bg-rose-50 text-rose-800 border-rose-200';
+
+        html += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3 font-mono font-semibold text-brand-dark cursor-pointer hover:underline" onclick="viewInvoiceDossier('${o.id}')">${o.id.substring(0, 8).toUpperCase()}...</td>
+            <td class="p-3 font-semibold text-brand-dark">${o.customerName || '-'}</td>
+            <td class="p-3 text-brand-text-muted">${o.institutionName || '-'}</td>
+            <td class="p-3 text-right font-bold text-brand-green">₹${Number(o.orderTotal || o.total || o.totalAmount || 0).toLocaleString('en-IN')}</td>
+            <td class="p-3">
+              <span class="px-2 py-0.5 text-[10px] font-bold rounded border ${badgeClass} capitalize">${o.status || 'pending'}</span>
+            </td>
+            <td class="p-3 text-brand-text-muted font-mono text-[11px]">${timeStr}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    // Widget 2 Renderer: Quick Staff Approvals
+    function renderWidgetStaffApprovals() {
+      const container = document.getElementById('widget_staff_approvals_container');
+      if (!container) return;
+
+      if (!isDataLoaded.users) {
+        container.innerHTML = getSkeletonHTML(3);
+        return;
+      }
+
+      const pendingStaffList = users.filter(u => u.role === 'staff' && u.status === 'pending');
+
+      if (pendingStaffList.length === 0) {
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center p-8 text-center min-h-[200px]">
+            <div class="rounded-full bg-emerald-50 p-3 text-emerald-600 mb-2">
+              <i data-lucide="shield-check" class="h-6 w-6"></i>
+            </div>
+            <p class="text-sm font-semibold text-emerald-600">All staff requests resolved ✓</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      let html = `<div class="divide-y divide-brand-border">`;
+
+      pendingStaffList.forEach(staff => {
+        html += `
+          <div class="flex items-center justify-between py-3 hover:bg-slate-50 px-2 transition-all rounded">
+            <div>
+              <div class="font-bold text-brand-dark text-sm">${staff.name}</div>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-brand-green/10 text-brand-green">${staff.subRole || 'Staff'}</span>
+                <span class="text-xs text-brand-text-muted font-mono">${staff.whatsappNumber || '-'}</span>
+              </div>
+            </div>
+            <div class="flex gap-1.5">
+              <button onclick="approveStaffMember('${staff.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-xs flex items-center gap-1 transition-colors" title="Approve">
+                <i data-lucide="check" class="h-3 w-3"></i> Approve
+              </button>
+              <button onclick="rejectStaffMember('${staff.id}')" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold text-xs flex items-center gap-1 transition-colors" title="Reject">
+                <i data-lucide="x" class="h-3 w-3"></i> Reject
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    // Widget 3 Renderer: Low Stock Alerts
+    function renderWidgetLowStockAlerts() {
+      const container = document.getElementById('widget_low_stock_container');
+      const badge = document.getElementById('widget_low_stock_badge');
+      if (!container) return;
+
+      if (!isDataLoaded.products) {
+        container.innerHTML = getSkeletonHTML(3);
+        if (badge) badge.classList.add('hidden');
+        return;
+      }
+
+      const lowStockProducts = products.filter(p => {
+        const rLvl = p.reorderLevel !== undefined ? p.reorderLevel : 100;
+        return Number(p.stock || 0) <= Number(rLvl);
+      });
+
+      if (badge) {
+        if (lowStockProducts.length > 0) {
+          badge.innerText = lowStockProducts.length;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+
+      if (lowStockProducts.length === 0) {
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center p-8 text-center min-h-[200px]">
+            <div class="rounded-full bg-emerald-50 p-3 text-emerald-600 mb-2">
+              <i data-lucide="package-check" class="h-6 w-6"></i>
+            </div>
+            <p class="text-sm font-semibold text-emerald-600">All items well stocked ✓</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      let html = `
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-brand-dark font-semibold border-b border-brand-border">
+              <th class="p-3">Product Name</th>
+              <th class="p-3">SKU</th>
+              <th class="p-3 text-center">Stock</th>
+              <th class="p-3 text-center">Reorder Level</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-brand-border">
+      `;
+
+      lowStockProducts.forEach(p => {
+        const rLvl = p.reorderLevel !== undefined ? p.reorderLevel : 100;
+        html += `
+          <tr class="bg-rose-50/60 hover:bg-rose-50 border-b border-brand-border">
+            <td class="p-3 font-semibold text-brand-dark">${p.name}</td>
+            <td class="p-3 font-mono text-brand-text-muted text-[11px]">${p.sku || '-'}</td>
+            <td class="p-3 text-center font-bold text-rose-700">${p.stock}</td>
+            <td class="p-3 text-center text-brand-text-muted">${rLvl}</td>
+            <td class="p-3 text-right">
+              <button onclick="openQuickStockModal('${p.id}')" class="px-2 py-1 bg-brand-green hover:bg-brand-hover text-white rounded font-semibold text-[10px] uppercase tracking-wider transition-colors">
+                Update Stock &rarr;
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    // Widget 4 Renderer: Overdue Credit Accounts
+    function renderWidgetOverdueCredit() {
+      const container = document.getElementById('widget_overdue_credit_container');
+      const badge = document.getElementById('widget_overdue_badge');
+      if (!container) return;
+
+      if (!isDataLoaded.users) {
+        container.innerHTML = getSkeletonHTML(3);
+        if (badge) badge.classList.add('hidden');
+        return;
+      }
+
+      const overdueCustomers = users.filter(u => u.role === 'customer' && (u.creditStatus === 'overdue' || u.overdueAmount > 0));
+
+      let totalOverdueSum = overdueCustomers.reduce((acc, u) => acc + Number(u.overdueAmount || u.balance || 0), 0);
+
+      if (badge) {
+        if (overdueCustomers.length > 0) {
+          badge.innerText = `₹${totalOverdueSum.toLocaleString('en-IN')}`;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+
+      if (overdueCustomers.length === 0) {
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center p-8 text-center min-h-[200px]">
+            <div class="rounded-full bg-emerald-50 p-3 text-emerald-600 mb-2">
+              <i data-lucide="check-circle" class="h-6 w-6"></i>
+            </div>
+            <p class="text-sm font-semibold text-emerald-600">All customer ledgers clear ✓</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      let html = `<div class="divide-y divide-brand-border">`;
+
+      overdueCustomers.forEach(u => {
+        const amount = Number(u.overdueAmount || u.balance || 0);
+        const days = Number(u.daysOverdue || 30);
+        
+        let daysColor = 'text-yellow-700 bg-yellow-50 border-yellow-200';
+        if (days >= 90) {
+          daysColor = 'text-red-700 bg-red-50 border-red-200';
+        } else if (days >= 60) {
+          daysColor = 'text-orange-700 bg-orange-50 border-orange-200';
+        }
+
+        const cleanPhone = u.whatsappNumber ? u.whatsappNumber.replace(/\D/g, '') : '';
+        const textMsg = encodeURIComponent(`*Ganga Maxx Payment Reminder*\n\nHello ${u.name},\nThis is a friendly reminder regarding your overdue corporate credit balance of *₹${amount.toLocaleString('en-IN')}* which is *${days} days overdue* for ${u.institutionName || 'your institution'}.\n\nPlease settle this outstanding balance at your earliest convenience. Thank you!`);
+        const waLink = `https://wa.me/${cleanPhone}?text=${textMsg}`;
+
+        html += `
+          <div class="flex items-center justify-between py-3 hover:bg-slate-50 px-2 transition-all rounded">
+            <div>
+              <div class="font-bold text-brand-dark text-sm">${u.name}</div>
+              <div class="text-xs text-brand-text-muted mt-0.5">${u.institutionName || '-'}</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full border ${daysColor}">${days} Days Overdue</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="text-right">
+                <div class="font-black text-rose-600 text-sm">₹${amount.toLocaleString('en-IN')}</div>
+              </div>
+              <a href="${waLink}" target="_blank" class="p-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded transition-all" title="Send WhatsApp Reminder">
+                <i data-lucide="message-square" class="h-4 w-4"></i>
+              </a>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    // Widget 5 Renderer: Today's Deliveries
+    function renderWidgetTodayDeliveries() {
+      const container = document.getElementById('widget_deliveries_container');
+      const badge = document.getElementById('widget_deliveries_badge');
+      if (!container) return;
+
+      if (!isDataLoaded.deliveries || !isDataLoaded.orders) {
+        container.innerHTML = getSkeletonHTML(3);
+        if (badge) badge.classList.add('hidden');
+        return;
+      }
+
+      const activeDeliveries = deliveries.filter(d => d.status !== 'delivered');
+
+      if (badge) {
+        if (activeDeliveries.length > 0) {
+          badge.innerText = activeDeliveries.length;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+
+      if (activeDeliveries.length === 0) {
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center p-8 text-center min-h-[200px]">
+            <div class="rounded-full bg-emerald-50 p-3 text-emerald-600 mb-2">
+              <i data-lucide="truck" class="h-6 w-6"></i>
+            </div>
+            <p class="text-sm font-semibold text-emerald-600">No deliveries pending today ✓</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      let html = `<div class="divide-y divide-brand-border">`;
+
+      activeDeliveries.forEach(d => {
+        const order = orders.find(o => o.id === d.orderId || (o.orderId && o.orderId === d.orderId));
+        const customer = order ? order.customerName : 'Unknown Customer';
+        const addressObj = order ? order.deliveryAddress || {} : {};
+        const address = addressObj.street ? `${addressObj.street}, ${addressObj.city}` : 'No Address logged';
+        
+        let statusColor = 'bg-slate-100 text-slate-800 border-slate-200';
+        if (d.status === 'scheduled') statusColor = 'bg-blue-50 text-blue-700 border-blue-100';
+        else if (d.status === 'inTransit') statusColor = 'bg-orange-50 text-orange-700 border-orange-100';
+        else if (d.status === 'delivered') statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+        else if (d.status === 'failed') statusColor = 'bg-rose-50 text-rose-700 border-rose-100';
+
+        html += `
+          <div class="flex items-center justify-between py-3 hover:bg-slate-50 px-2 transition-all rounded">
+            <div>
+              <div class="font-bold text-brand-dark text-sm flex items-center gap-2">
+                <span>ID: #${d.deliveryId || d.id.substring(0,8).toUpperCase()}</span>
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded border ${statusColor} capitalize">${d.status || 'scheduled'}</span>
+              </div>
+              <div class="text-xs font-semibold text-brand-dark mt-1">${customer}</div>
+              <div class="text-[11px] text-brand-text-muted truncate max-w-[280px] mt-0.5">${address}</div>
+            </div>
+            <div class="text-right text-xs">
+              <span class="text-brand-text-muted block">Coordinator</span>
+              <span class="font-semibold text-brand-dark">${d.assignedCoordinator || 'Unassigned'}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    // Widget 6 Renderer: Revenue Chart using Chart.js
+    let revenueChart = null;
+    function renderWidgetRevenueChart() {
+      const canvas = document.getElementById('revenueTrendChart');
+      if (!canvas) return;
+
+      if (!isDataLoaded.orders) {
+        return; // wait for data to render chart
+      }
+
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const last6Months = [];
+      const today = new Date();
+
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        last6Months.push({
+          year: d.getFullYear(),
+          month: d.getMonth(),
+          name: `${monthNames[d.getMonth()]} ${d.getFullYear().toString().substring(2)}`,
+          revenue: 0
+        });
+      }
+
+      orders.forEach(ord => {
+        if (ord.status === 'delivered') {
+          const ordDate = ord.createdAt ? (ord.createdAt.toDate ? ord.createdAt.toDate() : new Date(ord.createdAt)) : null;
+          if (ordDate) {
+            const ordYear = ordDate.getFullYear();
+            const ordMonth = ordDate.getMonth();
+            const match = last6Months.find(m => m.year === ordYear && m.month === ordMonth);
+            if (match) {
+              const amount = Number(ord.orderTotal || ord.total || ord.totalAmount || 0);
+              match.revenue += amount;
+            }
+          }
+        }
+      });
+
+      const labels = last6Months.map(m => m.name);
+      const data = last6Months.map(m => m.revenue);
+      const backgroundColors = last6Months.map((m, idx) => idx === 5 ? '#1a2332' : '#2d7a5f');
+
+      if (revenueChart) {
+        revenueChart.destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+      revenueChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Revenue (₹)',
+            data: data,
+            backgroundColor: backgroundColors,
+            borderWidth: 0,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return '₹' + context.raw.toLocaleString('en-IN');
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '₹' + value.toLocaleString('en-IN');
+                },
+                font: {
+                  family: 'Inter'
+                }
+              },
+              grid: {
+                color: '#f1f5f9'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                font: {
+                  family: 'Inter'
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Quick stock edit modal handlers
+    window.openQuickStockModal = function(productId) {
+      const p = products.find(prod => prod.id === productId);
+      if (!p) return;
+      document.getElementById('quick_stock_product_id').value = productId;
+      document.getElementById('quick_stock_product_title').innerText = p.name;
+      document.getElementById('quick_stock_product_sku').innerText = p.sku;
+      document.getElementById('quick_stock_current_display').innerText = `${p.stock} units`;
+      document.getElementById('quick_stock_input').value = p.stock;
+      openModal('update_stock_modal');
+    };
+
+    window.submitQuickStockUpdate = async function(event) {
+      event.preventDefault();
+      const productId = document.getElementById('quick_stock_product_id').value;
+      const newStock = parseInt(document.getElementById('quick_stock_input').value, 10);
+      
+      if (isNaN(newStock) || newStock < 0) {
+        showToast("Please enter a valid stock quantity.", true);
+        return;
+      }
+
+      try {
+        const productRef = doc(db, 'products', productId);
+        await updateDoc(productRef, {
+          stock: newStock,
+          updatedAt: new Date()
+        });
+        
+        closeModal();
+        showToast("Product stock updated successfully!");
+      } catch (err) {
+        console.error("Error updating stock:", err);
+        showToast("Failed to update stock: " + err.message, true);
+      }
+    };
+
+    // Render Section 2: Staff Approvals Table
+    function renderStaffApprovalsTable() {
+      const tbody = document.getElementById('staff_table_body');
+      const pendingStaffList = users.filter(u => u.role === 'staff' && u.status === 'pending');
+      
+      if (pendingStaffList.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-brand-text-muted">
+              No pending staff registration requests found.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = pendingStaffList.map(staff => {
+        const formattedDate = staff.createdAt ? (staff.createdAt.toDate ? staff.createdAt.toDate().toLocaleDateString('en-IN') : new Date(staff.createdAt).toLocaleDateString('en-IN')) : '-';
+        
+        return `
+          <tr class="hover:bg-slate-50 border-b border-brand-border">
+            <td class="p-4 font-semibold text-brand-dark">${staff.name}</td>
+            <td class="p-4"><span class="badge bg-brand-green/10 text-brand-green">${staff.subRole}</span></td>
+            <td class="p-4 text-brand-text-muted">${staff.email}</td>
+            <td class="p-4 text-brand-text-muted font-mono">${staff.whatsappNumber}</td>
+            <td class="p-4 text-brand-text-muted">${formattedDate}</td>
+            <td class="p-4 text-right flex justify-end gap-2">
+              <button onclick="approveStaffMember('${staff.id}')" class="px-2.5 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 transition-colors">
+                <i data-lucide="check" class="h-3.5 w-3.5"></i>
+                Approve
+              </button>
+              <button onclick="rejectStaffMember('${staff.id}')" class="px-2.5 py-1.5 rounded bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 transition-colors">
+                <i data-lucide="x" class="h-3.5 w-3.5"></i>
+                Reject
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      
+      lucide.createIcons();
+    }
+
+    // Approve Staff Member flow
+    window.approveStaffMember = async function(uid) {
+      const staff = users.find(u => u.id === uid);
+      if (!staff) return;
+
+      if (!(await window.ui.confirm(`Are you sure you want to approve staff access for ${staff.name}?`))) return;
+
+      try {
+        const idToken = await getAdminToken();
+        
+        const response = await fetch(`/admin/approve-staff/${uid}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          }
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to approve staff');
+        }
+
+        showToast(`Staff access approved for ${staff.name}!`);
+        
+        // Open WhatsApp link
+        const cleanPhone = staff.whatsappNumber.replace(/\D/g, '');
+        const textMsg = encodeURIComponent(`Congratulations! Your Ganga Maxx staff account has been approved. You can now login at ${window.location.origin}/pages/login.html`);
+        const waLink = `https://wa.me/${cleanPhone}?text=${textMsg}`;
+        window.open(waLink, '_blank');
+
+      } catch (err) {
+        console.error("Error approving staff:", err);
+        showToast(err.message, true);
+      }
+    };
+
+    // Reject Staff Member Dialog trigger
+    window.rejectStaffMember = function(uid) {
+      pendingRejectionUid = uid;
+      document.getElementById('rejection_reason_text').value = '';
+      
+      // Open modal
+      openModal('reject_reason_modal');
+    };
+
+    // Confirm Rejection flow
+    window.confirmStaffRejection = async function() {
+      const uid = pendingRejectionUid;
+      const reason = document.getElementById('rejection_reason_text').value.trim();
+      
+      if (!reason) {
+        if (window.toast) window.toast.show("Please specify a reason for rejection.", "info"); else alert("Please specify a reason for rejection.");
+        return;
+      }
+
+      const staff = users.find(u => u.id === uid);
+      if (!staff) return;
+
+      try {
+        const idToken = await getAdminToken();
+        
+        const response = await fetch(`/admin/reject-staff/${uid}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify({ reason })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to reject staff');
+        }
+
+        closeModal();
+        showToast(`Access request denied for ${staff.name}.`);
+        
+        // Open WhatsApp rejection link
+        const cleanPhone = staff.whatsappNumber.replace(/\D/g, '');
+        const textMsg = encodeURIComponent(`Hello ${staff.name}, your Ganga Maxx staff account access request was declined for the following reason: ${reason}`);
+        const waLink = `https://wa.me/${cleanPhone}?text=${textMsg}`;
+        window.open(waLink, '_blank');
+
+      } catch (err) {
+        console.error("Error rejecting staff:", err);
+        showToast(err.message, true);
+      }
+    };
+
+    // Render Section 3: Customer Profiles Table
+    window.filterCustomers = function() {
+      const search = document.getElementById('customer_search').value.toLowerCase();
+      const typeFilter = document.getElementById('customer_type_filter').value;
+      const statusFilter = document.getElementById('customer_status_filter').value;
+      const tbody = document.getElementById('customers_table_body');
+
+      let filtered = users.filter(u => u.role === 'customer');
+
+      if (search) {
+        filtered = filtered.filter(u => 
+          (u.name && u.name.toLowerCase().includes(search)) ||
+          (u.email && u.email.toLowerCase().includes(search)) ||
+          (u.institutionName && u.institutionName.toLowerCase().includes(search)) ||
+          (u.whatsappNumber && u.whatsappNumber.includes(search))
+        );
+      }
+
+      if (typeFilter !== 'All') {
+        filtered = filtered.filter(u => u.institutionType === typeFilter);
+      }
+
+      if (statusFilter !== 'All') {
+        filtered = filtered.filter(u => u.status === statusFilter);
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="p-8 text-center text-brand-text-muted">No customers found matching the filters.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(cust => {
+        const ordersCount = orders.filter(o => o.customerId === cust.id || o.customerEmail === cust.email).length;
+        const statusClass = cust.status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100';
+        
+        return `
+          <tr class="hover:bg-slate-50 border-b border-brand-border">
+            <td class="p-4 font-semibold text-brand-dark">${cust.name}</td>
+            <td class="p-4 text-brand-dark">${cust.institutionName || '-'}</td>
+            <td class="p-4 text-brand-text-muted">${cust.institutionType || '-'}</td>
+            <td class="p-4 text-brand-text-muted">${cust.email}</td>
+            <td class="p-4 text-brand-text-muted font-mono">${cust.whatsappNumber || '-'}</td>
+            <td class="p-4">
+              <span class="px-2 py-0.5 text-xs font-semibold rounded-full border ${statusClass}">${cust.status || 'active'}</span>
+            </td>
+            <td class="p-4 text-center font-bold text-brand-dark">${ordersCount}</td>
+            <td class="p-4 text-right flex justify-end gap-2">
+              <button onclick="viewCustomerDossier('${cust.id}')" class="p-1.5 text-slate-500 hover:text-brand-dark bg-slate-100 hover:bg-slate-200 rounded transition-all" title="View Dossier">
+                <i data-lucide="eye" class="h-4 w-4"></i>
+              </button>
+              <button onclick="toggleCustomerStatus('${cust.id}')" class="p-1.5 ${cust.status === 'active' ? 'text-rose-500 hover:bg-rose-50' : 'text-emerald-500 hover:bg-emerald-50'} bg-slate-100 rounded transition-all" title="${cust.status === 'active' ? 'Suspend Account' : 'Activate Account'}">
+                <i data-lucide="${cust.status === 'active' ? 'shield-alert' : 'shield-check'}" class="h-4 w-4"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    };
+
+    // Toggle customer account active / suspended state
+    window.toggleCustomerStatus = async function(id) {
+      const cust = users.find(u => u.id === id);
+      if (!cust) return;
+
+      const nextStatus = cust.status === 'active' ? 'suspended' : 'active';
+      if (!(await window.ui.confirm(`Are you sure you want to change account status of ${cust.name} to ${nextStatus}?`))) return;
+
+      try {
+        await updateDoc(doc(db, 'users', id), {
+          status: nextStatus,
+          updatedAt: new Date()
+        });
+        showToast(`Customer account status updated to ${nextStatus}.`);
+      } catch (err) {
+        console.error("Error setting customer status:", err);
+        showToast("Failed to update status: " + err.message, true);
+      }
+    };
+
+    // View Customer Detailed Dossier
+    window.viewCustomerDossier = function(id) {
+      const cust = users.find(u => u.id === id);
+      if (!cust) return;
+
+      document.getElementById('modal_cust_id').value = id;
+      document.getElementById('modal_cust_name_input').value = cust.name || '';
+      document.getElementById('modal_cust_email_input').value = cust.email || '';
+      document.getElementById('modal_cust_phone_input').value = cust.whatsappNumber || '';
+      document.getElementById('modal_cust_password_input').value = ''; // Reset password field
+      document.getElementById('modal_cust_inst_input').value = cust.institutionName || '';
+      document.getElementById('modal_cust_type_input').value = cust.institutionType || '';
+      
+      const addr = cust.address || {};
+      document.getElementById('modal_cust_address_input').value = addr.street || '';
+      document.getElementById('modal_cust_city_input').value = addr.city || '';
+      document.getElementById('modal_cust_state_input').value = addr.state || '';
+      document.getElementById('modal_cust_pincode_input').value = addr.pincode || '';
+
+      openModal('customer_detail_modal');
+    };
+
+    window.saveCustomerDetails = async function() {
+      const id = document.getElementById('modal_cust_id').value;
+      if (!id) return;
+
+      const payload = {
+        name: document.getElementById('modal_cust_name_input').value,
+        email: document.getElementById('modal_cust_email_input').value,
+        whatsappNumber: document.getElementById('modal_cust_phone_input').value,
+        institutionName: document.getElementById('modal_cust_inst_input').value,
+        institutionType: document.getElementById('modal_cust_type_input').value,
+        address: {
+          street: document.getElementById('modal_cust_address_input').value,
+          city: document.getElementById('modal_cust_city_input').value,
+          state: document.getElementById('modal_cust_state_input').value,
+          pincode: document.getElementById('modal_cust_pincode_input').value
+        }
+      };
+
+      const password = document.getElementById('modal_cust_password_input').value;
+      if (password) {
+        payload.password = password;
+      }
+
+      try {
+        const idToken = await getAdminToken();
+        const response = await fetch(`/admin/update-user/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Failed to update customer');
+        }
+
+        showToast("Customer record and credentials updated successfully.");
+        closeModal();
+      } catch (err) {
+        console.error("Error updating customer:", err);
+        showToast("Error updating account details: " + err.message, true);
+      }
+    };
+
+    // Render Section 4: Catalog Product Table
+    function renderProductsTable() {
+      const tbody = document.getElementById('products_table_body');
+      if (products.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="p-8 text-center text-brand-text-muted">No products catalogued yet.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = products.map(p => {
+        const statusClass = p.active ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-slate-100 text-slate-500 border-slate-200';
+        return `
+          <tr class="hover:bg-slate-50 border-b border-brand-border">
+            <td class="p-4 font-semibold text-brand-dark">${p.name}</td>
+            <td class="p-4 text-brand-text-muted font-mono text-xs">${p.sku}</td>
+            <td class="p-4 text-brand-text-muted">${p.category}</td>
+            <td class="p-4 font-semibold text-brand-dark">₹${p.price} / ${p.unit}</td>
+            <td class="p-4 text-center font-semibold text-brand-dark">${p.minOrderQty}</td>
+            <td class="p-4 text-center font-mono ${p.stock < 10 ? 'text-rose-600 font-bold' : 'text-slate-700'}">${p.stock}</td>
+            <td class="p-4">
+              <span class="px-2 py-0.5 text-xs font-semibold rounded-full border ${statusClass}">${p.active ? 'Active' : 'Draft'}</span>
+            </td>
+            <td class="p-4 text-right flex justify-end gap-2">
+              <button onclick="editProduct('${p.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-all" title="Edit Item">
+                <i data-lucide="edit-3" class="h-4 w-4"></i>
+              </button>
+              <button onclick="deleteProduct('${p.id}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-all" title="Delete Item">
+                <i data-lucide="trash-2" class="h-4 w-4"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    // Slide product drawer open
+    window.openProductDrawer = function() {
+      document.getElementById('product_drawer_title').innerText = "Add New Catalog Product";
+      document.getElementById('product_form').reset();
+      document.getElementById('product_id').value = '';
+      document.getElementById('product_drawer').classList.remove('translate-x-full');
+    };
+
+    window.closeProductDrawer = function() {
+      document.getElementById('product_drawer').classList.add('translate-x-full');
+    };
+
+    // Submit add / edit product to firestore
+    window.handleProductSubmit = async function(event) {
+      event.preventDefault();
+
+      const id = document.getElementById('product_id').value;
+      const name = document.getElementById('prod_name').value.trim();
+      const sku = document.getElementById('prod_sku').value.trim();
+      const category = document.getElementById('prod_category').value;
+      const description = document.getElementById('prod_desc').value.trim();
+      const unit = document.getElementById('prod_unit').value.trim();
+      const price = Number(document.getElementById('prod_price').value);
+      const minOrderQty = Number(document.getElementById('prod_min_qty').value);
+      const stock = Number(document.getElementById('prod_stock').value);
+      const active = document.getElementById('prod_active').checked;
+
+      const productPayload = {
+        name,
+        sku,
+        category,
+        description,
+        unit,
+        price,
+        minOrderQty,
+        stock,
+        active,
+        updatedAt: new Date()
+      };
+
+      try {
+        if (id) {
+          // Update Mode
+          await updateDoc(doc(db, 'products', id), productPayload);
+          showToast(`Product ${name} updated successfully!`);
+        } else {
+          // Create Mode
+          const newDocRef = doc(collection(db, 'products'));
+          productPayload.createdAt = new Date();
+          await setDoc(newDocRef, productPayload);
+          showToast(`New product ${name} added to catalog!`);
+        }
+        closeProductDrawer();
+      } catch (err) {
+        console.error("Error saving product:", err);
+        showToast("Error saving product: " + err.message, true);
+      }
+    };
+
+    // Load product for editing
+    window.editProduct = function(id) {
+      const p = products.find(prod => prod.id === id);
+      if (!p) return;
+
+      document.getElementById('product_drawer_title').innerText = "Edit Catalog Product";
+      document.getElementById('product_id').value = p.id;
+      document.getElementById('prod_name').value = p.name;
+      document.getElementById('prod_sku').value = p.sku;
+      document.getElementById('prod_category').value = p.category;
+      document.getElementById('prod_desc').value = p.description || '';
+      document.getElementById('prod_unit').value = p.unit;
+      document.getElementById('prod_price').value = p.price;
+      document.getElementById('prod_min_qty').value = p.minOrderQty;
+      document.getElementById('prod_stock').value = p.stock;
+      document.getElementById('prod_active').checked = p.active;
+
+      document.getElementById('product_drawer').classList.remove('translate-x-full');
+    };
+
+    // Delete product from firestore
+    window.deleteProduct = async function(id) {
+      const p = products.find(prod => prod.id === id);
+      if (!p) return;
+
+      if (!(await window.ui.confirm(`Are you absolutely sure you want to delete ${p.name} from the catalog? This is irreversible.`))) return;
+
+      try {
+        await deleteDoc(doc(db, 'products', id));
+        showToast(`Product deleted successfully.`);
+      } catch (err) {
+        console.error("Error deleting product:", err);
+        showToast("Failed to delete product: " + err.message, true);
+      }
+    };
+
+    // Filter and Render Orders Table
+    window.filterOrders = function() {
+      const statusFilter = document.getElementById('order_status_filter').value;
+      const startDate = document.getElementById('order_date_start').value;
+      const endDate = document.getElementById('order_date_end').value;
+      const custSearch = document.getElementById('order_customer_search').value.toLowerCase();
+      const tbody = document.getElementById('orders_table_body');
+
+      let filtered = [...orders];
+
+      if (statusFilter !== 'All') {
+        filtered = filtered.filter(o => o.status === statusFilter);
+      }
+
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0,0,0,0);
+        filtered = filtered.filter(o => {
+          const oDate = o.createdAt ? (o.createdAt.toDate ? o.createdAt.toDate() : new Date(o.createdAt)) : null;
+          return oDate && oDate >= start;
+        });
+      }
+
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23,59,59,999);
+        filtered = filtered.filter(o => {
+          const oDate = o.createdAt ? (o.createdAt.toDate ? o.createdAt.toDate() : new Date(o.createdAt)) : null;
+          return oDate && oDate <= end;
+        });
+      }
+
+      if (custSearch) {
+        filtered = filtered.filter(o => 
+          (o.customerName && o.customerName.toLowerCase().includes(custSearch)) ||
+          (o.institutionName && o.institutionName.toLowerCase().includes(custSearch)) ||
+          (o.id && o.id.toLowerCase().includes(custSearch))
+        );
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="p-8 text-center text-brand-text-muted">No orders found matching the filter specs.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      // Sort by creation date descending
+      filtered.sort((a,b) => {
+        const da = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)) : 0;
+        const db_date = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)) : 0;
+        return db_date - da;
+      });
+
+      tbody.innerHTML = filtered.map(order => {
+        const formattedDate = order.createdAt ? (order.createdAt.toDate ? order.createdAt.toDate().toLocaleDateString('en-IN') : new Date(order.createdAt).toLocaleDateString('en-IN')) : '-';
+        const itemQty = order.items ? order.items.reduce((acc, curr) => acc + curr.quantity, 0) : 0;
+        
+        let statusBadgeClass = 'bg-slate-100 text-slate-800 border-slate-200';
+        if (order.status === 'pending') statusBadgeClass = 'bg-yellow-50 text-yellow-800 border-yellow-200';
+        else if (order.status === 'approved') statusBadgeClass = 'bg-blue-50 text-blue-800 border-blue-200';
+        else if (order.status === 'packed') statusBadgeClass = 'bg-purple-50 text-purple-800 border-purple-200';
+        else if (order.status === 'dispatched') statusBadgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
+        else if (order.status === 'delivered') statusBadgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+        else if (order.status === 'cancelled') statusBadgeClass = 'bg-rose-50 text-rose-800 border-rose-200';
+
+        return `
+          <tr class="hover:bg-slate-50 border-b border-brand-border">
+            <td class="p-4 font-mono font-bold text-xs text-brand-dark">${order.id.substring(0, 8).toUpperCase()}...</td>
+            <td class="p-4 font-semibold text-brand-dark">${order.customerName || '-'}</td>
+            <td class="p-4 text-brand-text-muted">${order.institutionName || '-'}</td>
+            <td class="p-4 text-center font-semibold text-brand-dark">${itemQty}</td>
+            <td class="p-4 text-right font-bold text-brand-green">₹${Number(order.total || 0).toLocaleString('en-IN')}</td>
+            <td class="p-4">
+              <span class="px-2.5 py-0.5 text-xs font-bold rounded-full border ${statusBadgeClass} capitalize">${order.status || 'pending'}</span>
+            </td>
+            <td class="p-4 text-brand-text-muted">${formattedDate}</td>
+            <td class="p-4 text-right">
+              <button onclick="viewInvoiceDossier('${order.id}')" class="btn-primary py-1 px-2.5 text-xs bg-brand-dark flex items-center gap-1.5 hover:bg-black transition-colors ml-auto">
+                <i data-lucide="eye" class="h-3.5 w-3.5"></i>
+                View Detail
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    };
+
+    // Cache to track order active in Modal
+    let activeModalOrderId = null;
+
+    // View Order Detail Modal
+    window.viewInvoiceDossier = function(id) {
+      const ord = orders.find(o => o.id === id);
+      if (!ord) return;
+
+      activeModalOrderId = id;
+
+      document.getElementById('modal_order_id').innerText = `Order ID: #${ord.id.toUpperCase()}`;
+      
+      const formattedDate = ord.createdAt ? (ord.createdAt.toDate ? ord.createdAt.toDate().toLocaleString('en-IN') : new Date(ord.createdAt).toLocaleString('en-IN')) : '-';
+      document.getElementById('modal_order_date').innerText = `Submitted On: ${formattedDate}`;
+
+      document.getElementById('modal_order_cust_name').innerText = ord.customerName || '-';
+      document.getElementById('modal_order_cust_inst').innerText = ord.institutionName || '-';
+      document.getElementById('modal_order_cust_phone').innerText = ord.customerPhone || '-';
+
+      const addr = ord.address || {};
+      document.getElementById('modal_order_address').innerHTML = `
+        ${addr.street || 'No street specified'}<br>
+        ${addr.city || '-'}, ${addr.state || '-'} - <span class="font-mono">${addr.pincode || '-'}</span>
+      `;
+
+      // Status pipeline badge inside modal
+      const badge = document.getElementById('modal_order_status_badge');
+      let badgeClass = 'px-2.5 py-0.5 text-xs font-bold rounded-full border capitalize ';
+      if (ord.status === 'pending') badgeClass += 'bg-yellow-50 text-yellow-800 border-yellow-200';
+      else if (ord.status === 'approved') badgeClass += 'bg-blue-50 text-blue-800 border-blue-200';
+      else if (ord.status === 'packed') badgeClass += 'bg-purple-50 text-purple-800 border-purple-200';
+      else if (ord.status === 'dispatched') badgeClass += 'bg-amber-50 text-amber-800 border-amber-200';
+      else if (ord.status === 'delivered') badgeClass += 'bg-emerald-50 text-emerald-800 border-emerald-200';
+      else if (ord.status === 'cancelled') badgeClass += 'bg-rose-50 text-rose-800 border-rose-200';
+      
+      badge.className = badgeClass;
+      badge.innerText = ord.status || 'pending';
+
+      // Set value inside selector dropdown
+      document.getElementById('modal_update_status').value = ord.status || 'pending';
+
+      // Items Table
+      const itemsBody = document.getElementById('modal_order_items_body');
+      if (!ord.items || ord.items.length === 0) {
+        itemsBody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-brand-text-muted">No items in this order.</td></tr>`;
+      } else {
+        itemsBody.innerHTML = ord.items.map(item => `
+          <tr class="hover:bg-slate-50">
+            <td class="p-3 font-semibold text-brand-dark">${item.name}</td>
+            <td class="p-3 text-center text-brand-text-muted font-mono">₹${Number(item.price || 0).toLocaleString('en-IN')}</td>
+            <td class="p-3 text-center text-brand-dark font-bold">${item.quantity}</td>
+            <td class="p-3 text-right text-brand-dark font-mono font-bold">₹${Number((item.price || 0) * (item.quantity || 0)).toLocaleString('en-IN')}</td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('modal_order_grand_total').innerText = `₹${Number(ord.total || 0).toLocaleString('en-IN')}`;
+
+      openModal('order_detail_modal');
+    };
+
+    // Update Order Pipeline State dynamically in real-time
+    window.updateOrderState = async function() {
+      const id = activeModalOrderId;
+      const nextStatus = document.getElementById('modal_update_status').value;
+
+      if (!id) return;
+
+      try {
+        await updateDoc(doc(db, 'orders', id), {
+          status: nextStatus,
+          updatedAt: new Date()
+        });
+        showToast(`Order status updated to "${nextStatus}" successfully!`);
+        
+        // Refresh modal badge state in real-time
+        const badge = document.getElementById('modal_order_status_badge');
+        let badgeClass = 'px-2.5 py-0.5 text-xs font-bold rounded-full border capitalize ';
+        if (nextStatus === 'pending') badgeClass += 'bg-yellow-50 text-yellow-800 border-yellow-200';
+        else if (nextStatus === 'approved') badgeClass += 'bg-blue-50 text-blue-800 border-blue-200';
+        else if (nextStatus === 'packed') badgeClass += 'bg-purple-50 text-purple-800 border-purple-200';
+        else if (nextStatus === 'dispatched') badgeClass += 'bg-amber-50 text-amber-800 border-amber-200';
+        else if (nextStatus === 'delivered') badgeClass += 'bg-emerald-50 text-emerald-800 border-emerald-200';
+        else if (nextStatus === 'cancelled') badgeClass += 'bg-rose-50 text-rose-800 border-rose-200';
+        badge.className = badgeClass;
+        badge.innerText = nextStatus;
+
+      } catch (err) {
+        console.error("Failed to update order status:", err);
+        showToast("Error updating order status: " + err.message, true);
+      }
+    };
+
+
+    // CSV exports
+    window.exportOrdersCSV = function() {
+      extExportOrders(orders);
+    };
+
+    window.exportCustomersCSV = function() {
+      const customersList = users.filter(u => u.role === 'customer');
+      extExportCustomers(customersList);
+    };
+
+    window.exportCreditAgingCSV = function() {
+      const customersList = users.filter(u => u.role === 'customer');
+      extExportCredit(customersList);
+    };
+
+    function downloadFile(content, fileName) {
+      const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", fileName);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+
+    // Modal management utils
+    window.openModal = function(modalId) {
+      const overlay = document.getElementById('modal_overlay');
+      const modal = document.getElementById(modalId);
+      
+      overlay.classList.add('active');
+      modal.classList.remove('hidden');
+    };
+
+    window.closeModal = function() {
+      const overlay = document.getElementById('modal_overlay');
+      overlay.classList.remove('active');
+      
+      // Hide all child modals
+      document.getElementById('reject_reason_modal').classList.add('hidden');
+      document.getElementById('customer_detail_modal').classList.add('hidden');
+      document.getElementById('order_detail_modal').classList.add('hidden');
+    };
+
+    // Logout Flow
+    window.handleLogout = async function() {
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error("Logout failed:", err);
+      }
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('subRole');
+      window.location.href = '/pages/login.html';
+    };
+
+    // Section views toggler
+    window.switchSection = function(sectionId) {
+      // Hide all content workspace sections
+      const sections = ['overview', 'staff', 'customers', 'products', 'orders', 'quotations', 'inventory', 'credit', 'compliance', 'reports', 'whatsapp', 'assistant'];
+      sections.forEach(sec => {
+        const el = document.getElementById(`section_${sec}`);
+        if (el) el.classList.add('hidden');
+        
+        const nav = document.getElementById(`nav_${sec}`);
+        if (nav) {
+          nav.className = "w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300";
+        }
+      });
+
+      // Show requested section
+      const activeSection = document.getElementById(`section_${sectionId}`);
+      if (activeSection) {
+        activeSection.classList.remove('hidden');
+      }
+
+      // Highlight active nav item
+      const activeNav = document.getElementById(`nav_${sectionId}`);
+      if (activeNav) {
+        activeNav.className = "w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors bg-brand-green text-white";
+      }
+
+      // Update Top breadcrumb name
+      document.getElementById('current_breadcrumb').innerText = sectionId.replace(/-/g, ' ');
+
+      // Trigger lazy loads
+      if (sectionId === 'whatsapp') {
+        loadWhatsappLogs();
+      }
+
+      // Close mobile sidebar if open
+      if (!document.getElementById('sidebar').classList.contains('-translate-x-full')) {
+        toggleMobileSidebar();
+      }
+    };
+
+    // Toggle Mobile Drawer Sidebar
+    window.toggleMobileSidebar = function() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobile_sidebar_overlay');
+      
+      if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+      }
+    };
+
+    // ================= WHATSAPP LOGS LOGIC =================
+    let allWhatsappLogs = [];
+
+    window.loadWhatsappLogs = async function() {
+      const tbody = document.getElementById('whatsapp_logs_table_body');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-brand-text-muted">Loading logs...</td></tr>';
+      
+      try {
+        const logsRef = collection(db, 'whatsappLogs');
+        const q = query(logsRef, orderBy('timestamp', 'desc'));
+        const snapshot = await getDocs(q);
+        
+        allWhatsappLogs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestampDate: doc.data().timestamp?.toDate() || new Date()
+        }));
+
+        filterWhatsappLogs();
+      } catch (error) {
+        console.error("Error fetching whatsapp logs:", error);
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">Failed to load logs.</td></tr>';
+      }
+    };
+
+    window.filterWhatsappLogs = function() {
+      const triggerFilter = document.getElementById('whatsapp_filter_trigger').value;
+      const dateFromStr = document.getElementById('whatsapp_filter_date_from').value;
+      const dateToStr = document.getElementById('whatsapp_filter_date_to').value;
+      
+      let dateFrom = dateFromStr ? new Date(dateFromStr) : null;
+      if (dateFrom) dateFrom.setHours(0,0,0,0);
+      
+      let dateTo = dateToStr ? new Date(dateToStr) : null;
+      if (dateTo) dateTo.setHours(23,59,59,999);
+
+      const filtered = allWhatsappLogs.filter(log => {
+        if (triggerFilter !== 'ALL' && log.trigger !== triggerFilter) return false;
+        if (dateFrom && log.timestampDate < dateFrom) return false;
+        if (dateTo && log.timestampDate > dateTo) return false;
+        return true;
+      });
+
+      const tbody = document.getElementById('whatsapp_logs_table_body');
+      if (!tbody) return;
+      
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-brand-text-muted">No logs found matching filters.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(log => {
+        const preview = log.message ? log.message.substring(0, 50).replace(/\n/g, ' ') + (log.message.length > 50 ? '...' : '') : '';
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap text-brand-text-muted text-xs">
+              ${log.timestampDate.toLocaleString()}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap font-medium text-brand-dark text-xs">
+              ${log.to || '-'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-xs">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold bg-brand-green/10 text-brand-green">
+                ${log.trigger}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-brand-text-muted max-w-xs truncate text-xs" title="${log.message || ''}">
+              ${preview}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-brand-text-muted text-xs">
+              ${log.openedBy || 'system'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    };
+
+    window.clearWhatsappFilters = function() {
+      document.getElementById('whatsapp_filter_trigger').value = 'ALL';
+      document.getElementById('whatsapp_filter_date_from').value = '';
+      document.getElementById('whatsapp_filter_date_to').value = '';
+      filterWhatsappLogs();
+    };
+
+    window.exportWhatsappLogsToCSV = function() {
+      if (allWhatsappLogs.length === 0) {
+        showToast("No logs to export", true);
+        return;
+      }
+      
+      const headers = ['Timestamp', 'To', 'Trigger', 'Message', 'Sent By'];
+      const rows = allWhatsappLogs.map(log => [
+        log.timestampDate.toISOString(),
+        log.to || '',
+        log.trigger || '',
+        '"' + (log.message || '').replace(/"/g, '""') + '"',
+        log.openedBy || 'system'
+      ]);
+      
+      const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "whatsapp_logs.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    // ================= AI PORTAL ASSISTANT LOGIC =================
+    const ASSISTANT_SYSTEM_PROMPT = "You are the intelligent AI Assistant for Ganga Maxx Marketplace B2B Bulk Order Portal Admin Dashboard. You help the Administrator understand and manage the portal, and you have the capability to automatically navigate them to different pages/sub-panels when they ask.\n\nNAVIGATION CAPABILITIES:\nWhenever the admin asks to view, check, edit, manage, go to, or look at a specific section, or if you believe navigating them there would be helpful, you MUST append a navigation tag exactly in the format `[NAVIGATE: <sectionId>]` at the very end of your response, and nowhere else.\nAvailable sectionIds are:\n- `overview` (Enterprise Overview, metrics, business health)\n- `staff` (Staff Approvals, approving/rejecting members)\n- `customers` (Customer Management, credit limits)\n- `products` (Product Management, price list, inventory catalog)\n- `orders` (All Orders, status tracker)\n- `quotations` (Salesman quotations, custom deal files)\n- `inventory` (Warehouse stocks, quantities)\n- `credit` (Credit accounts, credit aging summaries)\n- `compliance` (Chemical safety documents, MSDS records)\n- `reports` (Analytical charts, business reports)\n- `whatsapp` (WhatsApp notification logs, alert logs)\n- `assistant` (current AI chat sub-panel)\n\nFor example, if they say 'show me the orders', you might reply: 'I will take you to the Orders sub-panel right now. [NAVIGATE: orders]'.\n\nIf they ask for products, stock, pricing, customers, credit status, or order statuses, answer using the CURRENT SYSTEM LIVE DATA provided to you.";
+
+    let adminMessageHistory = [];
+    const adminSessionId = Math.random().toString(36).substring(2, 15);
+
+    window.sendAdminSuggested = async function(text) {
+      const suggested = document.getElementById('admin_suggested_questions');
+      if (suggested) {
+        suggested.style.display = 'none';
+      }
+      await sendAdminMessage(text);
+    };
+
+    window.handleAdminChatSubmit = async function(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById('admin_chat_input');
+      const text = input.value.trim();
+      if (!text) return;
+      
+      await sendAdminMessage(text);
+    };
+
+    // Auto-expand textarea or send on Enter
+    setTimeout(() => {
+      const txt = document.getElementById('admin_chat_input');
+      if (txt) {
+        txt.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const form = document.getElementById('admin_chat_form');
+            if (form) {
+              form.dispatchEvent(new Event('submit'));
+            }
+          }
+        });
+      }
+    }, 1000);
+
+    function appendAdminUserMessage(text) {
+      const chatMessages = document.getElementById('admin_chat_messages');
+      if (!chatMessages) return;
+      const div = document.createElement('div');
+      div.className = 'flex items-end gap-2 justify-end self-end max-w-[85%] sm:max-w-2xl';
+      div.innerHTML = `
+        <div class="bg-brand-green text-white rounded-2xl rounded-br-sm px-4 py-3 shadow-sm text-sm whitespace-pre-wrap">${escapeAdminHtml(text)}</div>
+      `;
+      chatMessages.appendChild(div);
+      scrollAdminChatToBottom();
+    }
+
+    function appendAdminBotMessage(text) {
+      const chatMessages = document.getElementById('admin_chat_messages');
+      if (!chatMessages) return;
+      const div = document.createElement('div');
+      div.className = 'flex items-end gap-2 max-w-[85%] sm:max-w-2xl mt-4';
+      
+      let formattedText = escapeAdminHtml(text);
+      formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      formattedText = formattedText.replace(/\n- (.*?)(?=\n|$)/g, '<br>• $1');
+      formattedText = formattedText.replace(/\n\d+\. (.*?)(?=\n|$)/g, '<br>• $1');
+      
+      div.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-brand-green/10 flex items-center justify-center shrink-0">
+          <i data-lucide="bot" class="w-4 h-4 text-brand-green"></i>
+        </div>
+        <div class="bg-white border border-brand-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm text-sm whitespace-pre-wrap text-brand-text-dark leading-relaxed">${formattedText}</div>
+      `;
+      chatMessages.appendChild(div);
+      
+      if (window.lucide) {
+        lucide.createIcons({ root: div });
+      }
+      
+      scrollAdminChatToBottom();
+    }
+
+    function escapeAdminHtml(unsafe) {
+      return unsafe
+           .replace(/&/g, "&amp;")
+           .replace(/</g, "&lt;")
+           .replace(/>/g, "&gt;")
+           .replace(/"/g, "&quot;")
+           .replace(/'/g, "&#039;");
+    }
+
+    function scrollAdminChatToBottom() {
+      const chatMessages = document.getElementById('admin_chat_messages');
+      if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+
+    async function sendAdminMessage(text) {
+      const suggested = document.getElementById('admin_suggested_questions');
+      if (suggested) {
+        suggested.style.display = 'none';
+      }
+
+      const input = document.getElementById('admin_chat_input');
+      const btn = document.getElementById('admin_send_btn');
+      const typing = document.getElementById('admin_typing_indicator');
+
+      // Clear & Disable
+      input.value = '';
+      input.style.height = '46px';
+      input.disabled = true;
+      btn.disabled = true;
+      
+      // Append User message
+      appendAdminUserMessage(text);
+      
+      // Show typing
+      typing.classList.remove('hidden');
+      scrollAdminChatToBottom();
+      
+      adminMessageHistory.push({ role: 'user', content: text });
+      
+      // Prepare dynamic live database summaries to empower assistant knowledge
+      let productsSummary = "";
+      if (products && products.length > 0) {
+        productsSummary = products.map(p => `- ${p.name} (SKU: ${p.sku || 'N/A'}): ₹${p.price || 0} / ${p.unit || 'unit'} | Stock: ${p.stock || 0} | Category: ${p.category || 'N/A'} | Status: ${p.active ? 'Active' : 'Draft'}`).join('\n');
+      } else {
+        productsSummary = "No products currently cataloged.";
+      }
+
+      let customersSummary = "";
+      const registeredCustomers = users ? users.filter(u => u.role === 'customer') : [];
+      if (registeredCustomers.length > 0) {
+        customersSummary = registeredCustomers.map(c => `- Name: ${c.name} | Institution: ${c.institutionName || 'N/A'} | Email: ${c.email || 'N/A'} | WhatsApp: ${c.whatsappNumber || 'N/A'} | Status: ${c.status || 'active'}`).join('\n');
+      } else {
+        customersSummary = "No registered customers found.";
+      }
+
+      let ordersSummary = "";
+      if (orders && orders.length > 0) {
+        const sortedOrders = [...orders].sort((a, b) => {
+          const da = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)) : 0;
+          const db_date = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)) : 0;
+          return db_date - da;
+        });
+        ordersSummary = sortedOrders.slice(0, 15).map(o => {
+          const formattedTotal = Number(o.orderTotal || o.total || o.totalAmount || 0).toLocaleString('en-IN');
+          const timeStr = o.createdAt ? (o.createdAt.toDate ? o.createdAt.toDate().toLocaleDateString('en-IN') : new Date(o.createdAt).toLocaleDateString('en-IN')) : 'N/A';
+          return `- Order ID: ${o.id.substring(0, 8).toUpperCase()} | Customer: ${o.customerName || 'N/A'} | Institution: ${o.institutionName || 'N/A'} | Total: ₹${formattedTotal} | Status: ${o.status || 'pending'} | Date: ${timeStr}`;
+        }).join('\n');
+      } else {
+        ordersSummary = "No orders currently registered in the pipeline.";
+      }
+
+      const enrichedSystemPrompt = `${ASSISTANT_SYSTEM_PROMPT}
+
+=========================================
+CURRENT REAL-TIME SYSTEM LIVE DATA:
+Below is the live state of the database. When the Administrator asks about products, stock levels, customers, credit status, or order statuses, use this live real-time information to provide 100% accurate, factual, and detailed answers.
+
+PRODUCT CATALOGUE:
+${productsSummary}
+
+CUSTOMER REGISTER LIST:
+${customersSummary}
+
+RECENT ORDER PIPELINE SUMMARY (Top 15):
+${ordersSummary}
+=========================================`;
+
+      try {
+        const res = await fetch('/assistant/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messages: adminMessageHistory,
+            sessionId: adminSessionId,
+            systemPrompt: enrichedSystemPrompt
+          })
+        });
+        
+        if (!res.ok) {
+          throw new Error("Server returned " + res.status);
+        }
+        
+        const data = await res.json();
+        
+        if (data.reply) {
+          let replyText = data.reply;
+          
+          // Detect and intercept navigation command: [NAVIGATE: <sectionId>]
+          const navRegex = /\[NAVIGATE:\s*(\w+)\]/i;
+          const match = replyText.match(navRegex);
+          if (match) {
+            const targetSection = match[1].toLowerCase();
+            // Clean up the reply text by removing the navigation tag so it's not visible to the user
+            replyText = replyText.replace(navRegex, '').trim();
+            
+            // Trigger automatic panel navigation after 1.2 seconds so they can read the text
+            setTimeout(() => {
+              if (typeof window.switchSection === 'function') {
+                window.switchSection(targetSection);
+                showToast(`Navigated to "${targetSection}" panel`, false);
+              }
+            }, 1200);
+          }
+
+          appendAdminBotMessage(replyText);
+          adminMessageHistory.push({ role: 'model', content: data.reply });
+        } else {
+          appendAdminBotMessage("I'm sorry, I didn't get a response. Please try again.");
+        }
+        
+      } catch (err) {
+        console.error("Admin Assistant Chat error:", err);
+        appendAdminBotMessage("Sorry, I encountered an error connecting to the server. Please try again later.");
+      } finally {
+        typing.classList.add('hidden');
+        input.disabled = false;
+        btn.disabled = false;
+        input.focus();
+      }
+    }
+
+    // Initialize display with overview section loaded
+    switchSection('overview');
+
+    // 1. Check local session immediately to avoid reload/flicker and support offline/fallback login
+    let localStorageUser = null;
+    let isSessionInitialized = false;
+
+    try {
+      const stored = localStorage.getItem('currentUser');
+      if (stored) {
+        localStorageUser = JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error("Error reading localStorage currentUser:", e);
+    }
+
+    if (localStorageUser && localStorageUser.role === 'admin') {
+      console.log("Cached admin session found. Initializing view immediately.", localStorageUser);
+      isSessionInitialized = true;
+      
+      // Populate basic UI
+      document.getElementById('admin_name').innerText = localStorageUser.name || 'Admin Master';
+      document.getElementById('admin_email').innerText = localStorageUser.email;
+      document.getElementById('admin_avatar').innerText = (localStorageUser.name || 'AD').substring(0, 2).toUpperCase();
+      
+      // Initialize real-time synchronization immediately
+      setupRealTimeSync();
+      
+      // Verify session integrity with Firestore
+      const targetUid = localStorageUser.uid || localStorageUser.id;
+      getDoc(doc(db, 'users', targetUid)).then((userDoc) => {
+        if (!userDoc.exists() || userDoc.data().role !== 'admin' || userDoc.data().status !== 'active') {
+          console.error("Verification failed: session is invalid, inactive, or not admin.");
+          forceLogout();
+        } else {
+          const freshData = userDoc.data();
+          document.getElementById('admin_name').innerText = freshData.name || 'Admin Master';
+          document.getElementById('admin_email').innerText = freshData.email;
+          document.getElementById('admin_avatar').innerText = (freshData.name || 'AD').substring(0, 2).toUpperCase();
+        }
+      }).catch((err) => {
+        console.warn("Could not reach Firestore to verify cached session freshness (might be offline):", err);
+      });
+    }
+
+    // 2. Firebase Auth Listener
+    onAuthStateChanged(auth, async (user) => {
+      authResolve(user);
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (!userDoc.exists() || userDoc.data().role !== 'admin' || userDoc.data().status !== 'active') {
+            console.error("Access restricted: Firebase Auth user is not active Admin.");
+            forceLogout();
+            return;
+          }
+          
+          const adminData = userDoc.data();
+          // Update local cache
+          const sessionData = {
+            uid: user.uid,
+            name: adminData.name,
+            email: adminData.email,
+            role: adminData.role,
+            status: adminData.status
+          };
+          localStorage.setItem('currentUser', JSON.stringify(sessionData));
+          
+          document.getElementById('admin_name').innerText = adminData.name || 'Admin Master';
+          document.getElementById('admin_email').innerText = adminData.email;
+          document.getElementById('admin_avatar').innerText = (adminData.name || 'AD').substring(0, 2).toUpperCase();
+          
+          if (!isSessionInitialized) {
+            isSessionInitialized = true;
+            setupRealTimeSync();
+          }
+        } catch (error) {
+          console.error("Auth listener verification crashed:", error);
+          if (!isSessionInitialized) {
+            forceLogout();
+          }
+        }
+      } else {
+        // Auth is null. If we also don't have a valid local session, redirect to login!
+        if (!isSessionInitialized) {
+          console.log("No valid admin session found. Redirecting to login...");
+          forceLogout();
+        }
+      }
+    });
+
+    // Make lucide run initial render
+    lucide.createIcons();
+
+  </script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script src="/components/chat-widget.js"></script>
+  <script type="module">
+    import { initNotifications } from "/js/notifications.js";
+    import { auth } from "/firebase/firebaseConfig.js";
+    import { onAuthStateChanged } from "firebase/auth";
+    
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        initNotifications(user.uid);
+      }
+    });
+  </script>
+</body>
+</html>

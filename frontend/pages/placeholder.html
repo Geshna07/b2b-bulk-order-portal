@@ -1,0 +1,33 @@
+<!-- Placeholder for B2B Bulk Order Portal Pages -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B2B Bulk Order Portal - Placeholder</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <!-- Importmap for standard Firebase resolve in browser -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+</head>
+<body>
+    <h1>Under Construction</h1>
+    <p>Please check back later.</p>
+<script src="/components/chat-widget.js"></script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module">
+    import { initNotifications } from "/js/notifications.js";
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser && currentUser.uid) initNotifications(currentUser.uid);
+  </script>
+</body>
+</html>

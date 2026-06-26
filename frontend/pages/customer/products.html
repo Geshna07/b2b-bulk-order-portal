@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Catalog - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter & Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Importmap for Firebase -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-brand-border sticky top-0 z-40">
+    <div class="px-4 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-brand-green flex items-center justify-center text-white">
+          <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+        </div>
+        <div>
+          <h1 class="font-bold tracking-tight text-sm uppercase text-brand-dark">Ganga Maxx</h1>
+          <p class="text-[10px] text-brand-green font-semibold tracking-wider">B2B MARKETPLACE</p>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-4">
+        <!-- Notification bell -->
+        <button id="notification_bell" class="relative p-2 text-brand-text-muted hover:text-brand-dark transition-colors rounded-full hover:bg-slate-100">
+          <i data-lucide="bell" class="h-5 w-5"></i>
+          <span class="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-rose-500 border border-white hidden"></span>
+        </button>
+
+        <!-- Vertical Divider -->
+        <span class="h-6 w-px bg-brand-border"></span>
+
+        <!-- Persistent Cart badge -->
+        <button onclick="toggleCartDrawer()" class="relative p-2 text-brand-green hover:bg-brand-green/10 rounded-full transition-all flex items-center gap-1.5 px-3 py-1.5 border border-brand-green/20">
+          <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+          <span class="text-xs font-bold" id="cart_badge_count">0</span>
+        </button>
+
+        <!-- Vertical Divider -->
+        <span class="h-6 w-px bg-brand-border"></span>
+
+        <!-- User Profile info -->
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-brand-green/10 text-brand-green font-bold flex items-center justify-center border border-brand-green/20" id="user_avatar">
+            CU
+          </div>
+          <div class="hidden sm:block text-left">
+            <h4 class="text-xs font-semibold leading-none" id="user_name">B2B Partner</h4>
+            <span class="text-[10px] text-brand-text-muted font-medium" id="user_institution">Hospital</span>
+          </div>
+        </div>
+
+        <!-- Logout button -->
+        <button onclick="window.handleLogout()" class="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-md font-semibold text-rose-500 hover:bg-rose-50 transition-colors">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Frame -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar Navigation for Desktop -->
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-brand-border py-6 px-4 gap-6 shrink-0 justify-between">
+      <div class="space-y-1">
+        <p class="text-[10px] font-bold tracking-wider text-brand-text-muted uppercase px-3 mb-2">Workspace</p>
+        
+        <a href="/pages/customer/dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="home" class="h-4 w-4"></i>
+          <span>Home Dashboard</span>
+        </a>
+        
+        <a href="/pages/customer/products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-green text-white">
+          <i data-lucide="grid" class="h-4 w-4"></i>
+          <span>Product Catalog</span>
+        </a>
+        
+        <a href="/pages/customer/place-order.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="clipboard-list" class="h-4 w-4"></i>
+          <span>Bulk Order Entry</span>
+        </a>
+        
+        <a href="/pages/customer/my-orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+          <span>My Orders</span>
+        </a>
+        
+        <a href="/pages/customer/quotation.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="file-text" class="h-4 w-4"></i>
+          <span>Quotations</span>
+        </a>
+        
+        <button onclick="document.getElementById('gm_chat_bubble').click()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-green hover:bg-brand-green hover:text-white transition-colors border border-brand-green/20 mt-4">
+          <i data-lucide="bot" class="h-4 w-4"></i>
+          <span>Talk to AI Assistant</span>
+        </button>
+      </div>
+
+      <!-- Quick support contact -->
+      <div class="bg-brand-green/5 rounded-lg p-4 border border-brand-green/10 text-xs">
+        <p class="font-bold text-brand-green mb-1">Ganga Maxx Support</p>
+        <p class="text-brand-text-muted mb-3">Need customizable credit line increments?</p>
+        <a href="https://wa.me/919999999999" target="_blank" class="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-brand-green hover:bg-brand-hover text-white rounded font-medium transition-colors">
+          <i data-lucide="phone" class="h-3.5 w-3.5"></i>
+          WhatsApp Support
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content Canvas -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 md:pb-8">
+      
+      <!-- Top Section with Search and Category filters -->
+      <div class="bg-white rounded-xl p-5 border border-brand-border shadow-sm mb-6 space-y-4">
+        <div class="flex flex-col md:flex-row gap-3 justify-between items-start md:items-center">
+          <div>
+            <h2 class="text-lg font-bold text-brand-dark">Medical & Surgical Catalog</h2>
+            <p class="text-xs text-brand-text-muted">Browse genuine hospital-grade inventory with B2B wholesale pricing tiers.</p>
+          </div>
+        </div>
+
+        <!-- Filter controls -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <!-- Search box -->
+          <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-2.5 h-4 w-4 text-brand-text-muted"></i>
+            <input type="text" id="catalog_search" placeholder="Search by name, category, or SKU..." oninput="filterCatalog()" class="w-full pl-9 pr-4 py-2 text-xs border border-brand-border rounded outline-none focus:ring-1 focus:ring-brand-green">
+          </div>
+          
+          <!-- Category dropdown -->
+          <div class="relative">
+            <select id="catalog_category_filter" onchange="filterCatalog()" class="w-full px-3 py-2 text-xs border border-brand-border rounded outline-none focus:ring-1 focus:ring-brand-green appearance-none bg-white">
+              <option value="all">All Categories</option>
+              <option value="Surgicals">Surgicals</option>
+              <option value="Pharmaceuticals">Pharmaceuticals</option>
+              <option value="Disinfectants">Disinfectants</option>
+            </select>
+            <i data-lucide="chevron-down" class="absolute right-3 top-3 h-3.5 w-3.5 text-brand-text-muted pointer-events-none"></i>
+          </div>
+
+          <!-- Quick statistics of products -->
+          <div class="text-right flex items-center justify-end text-xs text-brand-text-muted font-medium">
+            <span id="filtered_count">Showing 0 products</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Grid -->
+      <div id="product_grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Cards dynamically injected here -->
+        <div class="col-span-full text-center py-12 text-brand-text-muted text-xs bg-white rounded-xl border border-brand-border">
+          Loading catalog inventory...
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Cart Slide-out Drawer Panel -->
+  <div id="cart_drawer" class="fixed inset-y-0 right-0 w-80 bg-white border-l border-brand-border z-50 transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col justify-between hidden">
+    <div class="p-5 border-b border-brand-border flex items-center justify-between">
+      <div class="flex items-center gap-2 text-brand-dark">
+        <i data-lucide="shopping-cart" class="h-4 w-4 text-brand-green"></i>
+        <span class="font-bold text-sm">Your B2B Cart</span>
+      </div>
+      <button onclick="toggleCartDrawer()" class="p-1 rounded-full hover:bg-slate-100">
+        <i data-lucide="x" class="h-4 w-4"></i>
+      </button>
+    </div>
+
+    <!-- Scrollable cart items -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-3" id="cart_items_container">
+      <p class="text-xs text-center text-brand-text-muted py-8">Your cart is empty.</p>
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="p-4 border-t border-brand-border bg-slate-50 space-y-3">
+      <div class="flex items-center justify-between text-xs">
+        <span class="font-medium text-brand-text-muted">Cart Subtotal:</span>
+        <span class="font-bold text-brand-dark" id="cart_subtotal_price">₹0</span>
+      </div>
+      <p class="text-[9px] text-brand-text-muted">GST of 18% and custom shipping tier will be computed on checkout.</p>
+      
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="clearCart()" class="py-2 border border-brand-border hover:bg-rose-50 hover:text-rose-600 rounded text-xs font-semibold transition-colors text-center text-brand-text-muted">
+          Clear Cart
+        </button>
+        <a href="/pages/customer/place-order.html" class="py-2 bg-brand-green hover:bg-brand-hover text-white rounded text-xs font-semibold transition-all text-center">
+          Go to Checkout
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cart backdrop -->
+  <div id="cart_backdrop" onclick="toggleCartDrawer()" class="fixed inset-0 bg-brand-dark/40 z-40 hidden transition-opacity"></div>
+
+  <!-- Mobile Bottom Tab Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-brand-border h-16 flex items-center justify-around z-40 px-2 shadow-lg">
+    <a href="/pages/customer/dashboard.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="home" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Home</span>
+    </a>
+    <a href="/pages/customer/products.html" class="flex flex-col items-center justify-center flex-1 text-brand-green">
+      <i data-lucide="grid" class="h-5 w-5"></i>
+      <span class="text-[9px] font-semibold mt-1">Products</span>
+    </a>
+    <a href="/pages/customer/place-order.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="clipboard-list" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">New Order</span>
+    </a>
+    <a href="/pages/customer/my-orders.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="shopping-cart" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Orders</span>
+    </a>
+  </nav>
+
+  <!-- Firebase Scripts & Core Products controller -->
+  <script type="module">
+    import { auth, db } from '/firebase/firebaseConfig.js';
+    import { onAuthStateChanged, signOut } from 'firebase/auth';
+    import { collection, query, where, getDocs } from 'firebase/firestore';
+
+    let allProducts = [];
+    let cart = [];
+    let currentUser = null;
+
+    // Load session info
+    function initSession() {
+      const stored = localStorage.getItem('currentUser');
+      if (!stored) {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      
+      currentUser = JSON.parse(stored);
+      if (currentUser.role !== 'customer') {
+        localStorage.removeItem('currentUser');
+        window.location.href = '/pages/login.html';
+        return;
+      }
+
+      // Populate layout
+      document.getElementById('user_name').innerText = currentUser.name || 'B2B Client';
+      document.getElementById('user_institution').innerText = currentUser.institutionName || 'Ganga Maxx Partner';
+      document.getElementById('user_avatar').innerText = (currentUser.name || 'CU').substring(0, 2).toUpperCase();
+
+      // Load cart memory
+      loadCartFromSession();
+
+      // Fetch Catalog
+      fetchCatalog();
+    }
+
+    // Fetch products
+    async function fetchCatalog() {
+      try {
+        const productsRef = collection(db, 'products');
+        const q = query(productsRef, where('isActive', '==', true));
+        const snapshot = await getDocs(q);
+
+        allProducts = [];
+        snapshot.forEach(doc => {
+          allProducts.push({ id: doc.id, ...doc.data() });
+        });
+
+        filterCatalog();
+      } catch (err) {
+        console.error("Error loading product catalog:", err);
+        document.getElementById('product_grid').innerHTML = `
+          <div class="col-span-full text-center py-12 text-rose-500 text-xs bg-white rounded-xl border border-brand-border">
+            Failed to load products from database: ${err.message}
+          </div>
+        `;
+      }
+    }
+
+    // Filter & search products
+    window.filterCatalog = function() {
+      const searchVal = document.getElementById('catalog_search').value.toLowerCase();
+      const catVal = document.getElementById('catalog_category_filter').value;
+
+      const filtered = allProducts.filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchVal) || 
+                              p.sku.toLowerCase().includes(searchVal) ||
+                              (p.category && p.category.toLowerCase().includes(searchVal));
+        const matchesCat = catVal === 'all' || p.category === catVal;
+        return matchesSearch && matchesCat;
+      });
+
+      document.getElementById('filtered_count').innerText = `Showing ${filtered.length} products`;
+      renderProducts(filtered);
+    };
+
+    // Render product catalog list cards
+    function renderProducts(products) {
+      const grid = document.getElementById('product_grid');
+      if (products.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full text-center py-12 text-brand-text-muted text-xs bg-white rounded-xl border border-brand-border">
+            No products found matching filters.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = products.map(p => {
+        const imgUrl = p.images && p.images[0] ? p.images[0] : 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=400';
+        return `
+          <div class="bg-white rounded-xl border border-brand-border p-4 flex flex-col justify-between hover:shadow-md transition-all">
+            <div>
+              <!-- Product Image -->
+              <div class="h-32 w-full rounded bg-slate-100 mb-3 overflow-hidden relative border border-slate-100 flex items-center justify-center">
+                <img src="${imgUrl}" alt="${p.name}" class="h-full w-full object-cover">
+                <span class="absolute top-2 left-2 bg-brand-dark/80 text-white text-[9px] px-2 py-0.5 rounded font-mono font-semibold tracking-wider">${p.sku}</span>
+              </div>
+              
+              <!-- Meta Tags -->
+              <span class="text-[9px] font-bold text-brand-green bg-brand-green/10 px-2 py-0.5 rounded uppercase tracking-wider">${p.category || 'Generics'}</span>
+              
+              <!-- Title & description -->
+              <h3 class="text-xs font-bold text-brand-dark mt-2 leading-snug line-clamp-2" title="${p.name}">${p.name}</h3>
+              <p class="text-[10px] text-brand-text-muted mt-1 leading-snug line-clamp-2">${p.description || 'Fluid resistant high filtration product.'}</p>
+            </div>
+
+            <!-- Price & Buy actions -->
+            <div class="mt-4 border-t border-brand-border pt-3">
+              <div class="flex items-baseline justify-between mb-2">
+                <span class="text-[10px] text-brand-text-muted">Price / ${p.unit || 'Unit'}</span>
+                <span class="text-sm font-bold text-brand-dark">₹${p.pricePerUnit}</span>
+              </div>
+              
+              <!-- Wholesale Badge and action -->
+              <div class="flex items-center justify-between gap-1">
+                <span class="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Min: ${p.minOrderQty || 1} ${p.unit ? p.unit.split(' ')[0] : 'box'}</span>
+                <button onclick="addToCart('${p.id || p.productId}')" class="flex-1 py-1.5 px-2 bg-brand-green hover:bg-brand-hover text-white rounded text-[10px] font-bold transition-all flex items-center justify-center gap-1 shadow-sm">
+                  <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                  Add Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Create Lucide Icons for injected html
+      lucide.createIcons();
+    }
+
+    // Toggle slide-out Cart drawer
+    window.toggleCartDrawer = function() {
+      const drawer = document.getElementById('cart_drawer');
+      const backdrop = document.getElementById('cart_backdrop');
+      
+      if (drawer.classList.contains('hidden')) {
+        drawer.classList.remove('hidden');
+        setTimeout(() => {
+          drawer.classList.remove('translate-x-full');
+          backdrop.classList.remove('hidden');
+        }, 10);
+      } else {
+        drawer.classList.add('translate-x-full');
+        backdrop.classList.add('hidden');
+        setTimeout(() => {
+          drawer.classList.add('hidden');
+        }, 300);
+      }
+    };
+
+    // Add product to cart list
+    window.addToCart = function(productId) {
+      const product = allProducts.find(p => (p.id === productId || p.productId === productId));
+      if (!product) return;
+
+      const existing = cart.find(item => item.productId === productId);
+      if (existing) {
+        existing.qty += 1; // Increment Qty
+      } else {
+        // Start cart item with minimum order limit
+        cart.push({
+          productId: productId,
+          productName: product.name,
+          sku: product.sku,
+          unit: product.unit || 'Units',
+          pricePerUnit: Number(product.pricePerUnit),
+          minOrderQty: Number(product.minOrderQty || 1),
+          qty: Number(product.minOrderQty || 1)
+        });
+      }
+
+      saveCartToSession();
+      renderCartItems();
+      
+      // Auto open drawer to provide great user feedback
+      const drawer = document.getElementById('cart_drawer');
+      if (drawer.classList.contains('hidden')) {
+        toggleCartDrawer();
+      }
+    };
+
+    window.updateCartQty = function(productId, val) {
+      const item = cart.find(i => i.productId === productId);
+      if (!item) return;
+
+      item.qty = Number(val);
+      if (item.qty <= 0) {
+        cart = cart.filter(i => i.productId !== productId);
+      }
+      
+      saveCartToSession();
+      renderCartItems();
+    };
+
+    window.removeFromCart = function(productId) {
+      cart = cart.filter(i => i.productId !== productId);
+      saveCartToSession();
+      renderCartItems();
+    };
+
+    window.clearCart = async function() {
+      if (await window.ui.confirm("Clear all items in your cart?")) {
+        cart = [];
+        saveCartToSession();
+        renderCartItems();
+      }
+    };
+
+    function saveCartToSession() {
+      sessionStorage.setItem('reorder_items_cache', JSON.stringify(cart));
+      updateCartBadge();
+    }
+
+    function loadCartFromSession() {
+      const saved = sessionStorage.getItem('reorder_items_cache');
+      if (saved) {
+        cart = JSON.parse(saved);
+      }
+      updateCartBadge();
+      renderCartItems();
+    }
+
+    function updateCartBadge() {
+      const badge = document.getElementById('cart_badge_count');
+      const count = cart.reduce((acc, curr) => acc + curr.qty, 0);
+      badge.innerText = count;
+    }
+
+    function renderCartItems() {
+      const container = document.getElementById('cart_items_container');
+      const subtotalEl = document.getElementById('cart_subtotal_price');
+
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 text-center text-xs text-brand-text-muted">
+            <i data-lucide="shopping-cart" class="h-8 w-8 mx-auto opacity-30 mb-2"></i>
+            Your cart is empty.
+          </div>
+        `;
+        subtotalEl.innerText = '₹0';
+        lucide.createIcons();
+        return;
+      }
+
+      let subtotal = 0;
+      container.innerHTML = cart.map(item => {
+        const itemTotal = item.pricePerUnit * item.qty;
+        subtotal += itemTotal;
+
+        const isBelowMin = item.qty < item.minOrderQty;
+        const warningBorder = isBelowMin ? 'border-rose-300 bg-rose-50/50' : 'border-brand-border';
+
+        return `
+          <div class="p-3 border rounded-lg space-y-2 text-xs relative ${warningBorder}">
+            <button onclick="removeFromCart('${item.productId}')" class="absolute top-2 right-2 text-brand-text-muted hover:text-rose-500">
+              <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+            </button>
+            
+            <div class="pr-6">
+              <p class="font-bold text-brand-dark leading-tight">${item.productName}</p>
+              <p class="text-[9px] text-brand-text-muted mt-0.5">${item.sku} • ${item.unit}</p>
+            </div>
+
+            <div class="flex items-center justify-between pt-1 border-t border-dashed border-slate-200">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] text-brand-text-muted">Qty:</span>
+                <input type="number" value="${item.qty}" min="1" onchange="updateCartQty('${item.productId}', this.value)" class="w-12 p-1 border border-brand-border rounded text-center font-bold text-xs">
+              </div>
+              <span class="font-bold text-brand-dark">₹${itemTotal.toLocaleString()}</span>
+            </div>
+
+            ${isBelowMin ? `<p class="text-[9px] text-rose-500 font-semibold leading-none mt-1">⚠️ Min Qty is ${item.minOrderQty}. Adjust to submit.</p>` : ''}
+          </div>
+        `;
+      }).join('');
+
+      subtotalEl.innerText = `₹${subtotal.toLocaleString()}`;
+      lucide.createIcons();
+    }
+
+    // Logout
+    window.handleLogout = async function() {
+      try {
+        await signOut(auth);
+      } catch (e) {}
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('subRole');
+      window.location.href = '/pages/login.html';
+    };
+
+    initSession();
+    lucide.createIcons();
+  </script>
+
+<script src="/components/chat-widget.js"></script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module">
+    import { initNotifications } from "/js/notifications.js";
+    lucide.createIcons();
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser && currentUser.uid) initNotifications(currentUser.uid);
+  </script>
+</body>
+</html>

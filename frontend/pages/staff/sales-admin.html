@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Admin Dashboard - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter & Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Importmap for standard Firebase resolve in browser -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-brand-border sticky top-0 z-40">
+    <div class="px-4 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-brand-green flex items-center justify-center text-white">
+          <i data-lucide="shield-check" class="h-5 w-5"></i>
+        </div>
+        <div>
+          <h1 class="font-bold tracking-tight text-sm uppercase text-brand-dark">Ganga Maxx</h1>
+          <p class="text-[10px] text-brand-green font-semibold tracking-wider">STAFF CONTROL PANEL</p>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-brand-green/10 text-brand-green font-bold flex items-center justify-center border border-brand-green/20" id="staff_avatar">
+            SA
+          </div>
+          <div class="text-left">
+            <h4 class="text-xs font-semibold leading-none" id="staff_name_header">Vikram Singh</h4>
+            <span class="text-[10px] text-brand-green font-bold tracking-wider" id="staff_role_header">Sales Admin</span>
+          </div>
+        </div>
+        <button onclick="handleLogout()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md font-semibold text-rose-500 hover:bg-rose-50 transition-colors">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar and Content Layout -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-brand-border py-6 px-4 gap-6 shrink-0 justify-between">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 px-3 mb-4 py-2 border-b border-brand-border">
+          <i data-lucide="user" class="h-4.5 w-4.5 text-brand-green"></i>
+          <div>
+            <p class="text-xs font-bold text-brand-dark leading-none" id="sidebar_staff_name">Vikram Singh</p>
+            <span class="text-[9px] text-brand-text-muted" id="sidebar_staff_role">Sales Admin</span>
+          </div>
+        </div>
+        <p class="text-[10px] font-bold tracking-wider text-brand-text-muted uppercase px-3 mb-2">Navigation</p>
+        
+        <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-green text-white">
+          <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+          <span>Overview</span>
+        </button>
+        
+        <button onclick="switchTab('orders')" id="nav-orders" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+          <span>All Orders</span>
+        </button>
+        
+        <button onclick="switchTab('quotations')" id="nav-quotations" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="file-text" class="h-4 w-4"></i>
+          <span>Quotations</span>
+        </button>
+        
+        <button onclick="switchTab('customers')" id="nav-customers" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="users" class="h-4 w-4"></i>
+          <span>Customer Accounts</span>
+        </button>
+        
+        <button onclick="switchTab('pricing')" id="nav-pricing" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="tags" class="h-4 w-4"></i>
+          <span>Contract Pricing</span>
+        </button>
+        
+        <button onclick="switchTab('reports')" id="nav-reports" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+          <span>Reports</span>
+        </button>
+      </div>
+
+      <div class="bg-brand-green/5 rounded-lg p-4 border border-brand-green/10 text-xs">
+        <p class="font-bold text-brand-green mb-1">Sales Administration</p>
+        <p class="text-brand-text-muted mb-2">Verify credit ratings, set customer limits, or approve discount tiers.</p>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content Canvas -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      
+      <!-- TAB SECTION 1: OVERVIEW -->
+      <section id="section-overview" class="space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <h2 class="text-xl font-bold tracking-tight text-brand-dark">Sales Admin Console</h2>
+            <p class="text-xs text-brand-text-muted">Welcome back! Review real-time metrics and order authorizations.</p>
+          </div>
+          <div class="text-xs font-bold text-brand-green bg-brand-green/10 px-3 py-1.5 rounded-md border border-brand-green/20" id="current_date_badge">
+            Date: 26 June 2026
+          </div>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm">
+            <span class="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider block">New Orders Today</span>
+            <h3 class="text-2xl font-black mt-2 text-brand-dark" id="stat_new_orders">0</h3>
+            <span class="text-[9px] text-brand-green font-bold flex items-center gap-1 mt-1">Live Feed</span>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm border-l-4 border-l-amber-500">
+            <span class="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider block">Pending Approvals</span>
+            <h3 class="text-2xl font-black mt-2 text-amber-600" id="stat_pending_approvals">0</h3>
+            <span class="text-[9px] text-brand-text-muted font-medium mt-1">Check Credit Limits</span>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm">
+            <span class="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider block">Active Quotations</span>
+            <h3 class="text-2xl font-black mt-2 text-brand-dark" id="stat_active_quotations">0</h3>
+            <span class="text-[9px] text-brand-text-muted font-medium mt-1">Validity within 15 days</span>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm border-l-4 border-l-brand-green">
+            <span class="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider block">Revenue This Month</span>
+            <h3 class="text-2xl font-black mt-2 text-brand-green" id="stat_revenue_month">₹0</h3>
+            <span class="text-[9px] text-brand-green font-bold mt-1">Approved orders total</span>
+          </div>
+        </div>
+
+        <!-- Orders Requiring Approvals (Primary Feature) -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-brand-dark uppercase tracking-wider flex items-center gap-2">
+              <span class="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+              Orders Requiring Authorization
+            </h3>
+            <button onclick="switchTab('orders')" class="text-xs text-brand-green font-bold hover:underline">View All Orders</button>
+          </div>
+
+          <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                    <th class="p-4">Order ID</th>
+                    <th class="p-4">Customer</th>
+                    <th class="p-4">Institution</th>
+                    <th class="p-4 text-right">Order Total</th>
+                    <th class="p-4 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="approval_table_body" class="divide-y divide-brand-border">
+                  <tr>
+                    <td colspan="5" class="p-8 text-center text-brand-text-muted">Loading pending approvals...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB SECTION 2: ALL ORDERS -->
+      <section id="section-orders" class="hidden space-y-4">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-brand-dark">Commercial Purchase Requisitions</h2>
+          <p class="text-xs text-brand-text-muted">Access full audit log of all customer-submitted B2B bulk orders.</p>
+        </div>
+        <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                  <th class="p-4">Order ID</th>
+                  <th class="p-4">Customer</th>
+                  <th class="p-4">Institution</th>
+                  <th class="p-4 text-right">Total</th>
+                  <th class="p-4 text-center">Status</th>
+                  <th class="p-4 text-right">Audit</th>
+                </tr>
+              </thead>
+              <tbody id="all_orders_table_body" class="divide-y divide-brand-border">
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-brand-text-muted">Loading complete order ledger...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB SECTION 3: QUOTATIONS -->
+      <section id="section-quotations" class="hidden space-y-4">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-brand-dark">Quotations Pipeline</h2>
+          <p class="text-xs text-brand-text-muted">Review proposals, custom discount pricing requests, and contract proposals.</p>
+        </div>
+        <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                  <th class="p-4">Quotation ID</th>
+                  <th class="p-4">Customer Name</th>
+                  <th class="p-4">Proposed Items</th>
+                  <th class="p-4 text-right">Total Amount</th>
+                  <th class="p-4 text-center">Status</th>
+                  <th class="p-4 text-center">Valid Until</th>
+                </tr>
+              </thead>
+              <tbody id="quotations_table_body" class="divide-y divide-brand-border">
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-brand-text-muted">Loading quotations...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB SECTION 4: CUSTOMER ACCOUNTS -->
+      <section id="section-customers" class="hidden space-y-4">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-brand-dark">B2B Partner Accounts</h2>
+          <p class="text-xs text-brand-text-muted">Manage corporate buyers, hospitals, and pharmacies.</p>
+        </div>
+        <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                  <th class="p-4">Partner UID</th>
+                  <th class="p-4">Contact person</th>
+                  <th class="p-4">Institution Name</th>
+                  <th class="p-4">Type</th>
+                  <th class="p-4">WhatsApp No</th>
+                  <th class="p-4">Status</th>
+                </tr>
+              </thead>
+              <tbody id="customers_table_body" class="divide-y divide-brand-border">
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-brand-text-muted">Loading customer base...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB SECTION 5: CONTRACT PRICING -->
+      <section id="section-pricing" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <h2 class="text-xl font-bold tracking-tight text-brand-dark">Customer Contract Pricing</h2>
+            <p class="text-xs text-brand-text-muted">Override standard catalogue prices for specific B2B accounts.</p>
+          </div>
+          <button onclick="openPricingForm()" class="btn-primary py-2 px-4 bg-brand-green hover:bg-brand-hover text-white text-xs font-bold rounded shadow-sm flex items-center gap-1.5 self-start">
+            <i data-lucide="plus" class="h-4 w-4"></i>
+            Add Contract Price
+          </button>
+        </div>
+
+        <!-- Contract Pricing List -->
+        <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                  <th class="p-4">Customer Account</th>
+                  <th class="p-4">Product Name</th>
+                  <th class="p-4">SKU Code</th>
+                  <th class="p-4 text-right">Contracted Price/Unit</th>
+                  <th class="p-4 text-center">Last Modified By</th>
+                  <th class="p-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pricing_table_body" class="divide-y divide-brand-border">
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-brand-text-muted">Loading custom pricing contracts...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB SECTION 6: REPORTS -->
+      <section id="section-reports" class="hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-brand-dark">Business Reports & Forecasts</h2>
+          <p class="text-xs text-brand-text-muted">Analyze fulfillment cycles, credit usages, and sales revenue analytics.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-6 rounded-xl border border-brand-border shadow-sm space-y-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-brand-text-muted">Fulfillment Summary</h3>
+            <div class="space-y-3 pt-2">
+              <div class="flex justify-between text-xs font-semibold">
+                <span>Completed Deliveries</span>
+                <span class="text-brand-green" id="report_delivered_count">0</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2">
+                <div class="bg-brand-green h-2 rounded-full" style="width: 75%"></div>
+              </div>
+              <div class="flex justify-between text-xs font-semibold">
+                <span>Dispatched / In Transit</span>
+                <span class="text-blue-600" id="report_transit_count">0</span>
+              </div>
+              <div class="w-full bg-slate-100 rounded-full h-2">
+                <div class="bg-blue-600 h-2 rounded-full" style="width: 45%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-6 rounded-xl border border-brand-border shadow-sm space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-brand-text-muted">General Ledger Indicators</h3>
+            <p class="text-xs text-brand-text-muted">All parameters adhere directly to B2B credit parameters.</p>
+            <div class="p-4 bg-brand-green/5 border border-brand-green/10 rounded-lg text-xs">
+              <div class="flex justify-between font-bold text-brand-dark mb-1">
+                <span>Commercial Audit Tier:</span>
+                <span class="text-brand-green">Approved Tier-1</span>
+              </div>
+              <p class="text-[11px] text-brand-text-muted leading-relaxed">Financial reconciliation occurs every 15 days automatically via the Accounts Manager portal.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Pricing Override Modal Form -->
+  <div id="pricing_modal" class="fixed inset-0 bg-brand-dark/50 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-brand-border space-y-4">
+      <div class="flex items-center justify-between border-b border-brand-border pb-3">
+        <h3 class="font-bold text-sm text-brand-dark uppercase tracking-wider">Configure Contract Price</h3>
+        <button onclick="closePricingForm()" class="p-1 hover:bg-slate-100 rounded-full">
+          <i data-lucide="x" class="h-4.5 w-4.5"></i>
+        </button>
+      </div>
+
+      <form id="pricing_form" onsubmit="savePricingOverride(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold mb-1">Select Customer Account</label>
+          <select id="pricing_customer_select" class="w-full p-2 border border-brand-border rounded focus:outline-none focus:border-brand-green" required>
+            <option value="">Choose partner...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold mb-1">Select Product SKU</label>
+          <select id="pricing_product_select" class="w-full p-2 border border-brand-border rounded focus:outline-none focus:border-brand-green" required>
+            <option value="">Choose catalog product...</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold mb-1">Override Contract Price (INR per Unit)</label>
+          <input type="number" id="pricing_input" min="0" step="0.01" class="w-full p-2 border border-brand-border rounded focus:outline-none focus:border-brand-green" placeholder="e.g. 1050" required>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-brand-border">
+          <button type="button" onclick="closePricingForm()" class="px-3 py-1.5 border border-brand-border rounded text-brand-text-muted font-bold hover:bg-slate-50">Cancel</button>
+          <button type="submit" class="px-4 py-1.5 bg-brand-green hover:bg-brand-hover text-white rounded font-bold shadow-sm">Save override contract</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation Bar -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-brand-border h-16 flex items-center justify-around z-40 px-2 shadow-lg">
+    <button onclick="switchTab('overview')" class="flex flex-col items-center justify-center flex-1 text-brand-green" id="mobile-nav-overview">
+      <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
+      <span class="text-[9px] font-semibold mt-1">Overview</span>
+    </button>
+    <button onclick="switchTab('orders')" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted" id="mobile-nav-orders">
+      <i data-lucide="shopping-cart" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Orders</span>
+    </button>
+    <button onclick="switchTab('pricing')" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted" id="mobile-nav-pricing">
+      <i data-lucide="tags" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Contract</span>
+    </button>
+    <button onclick="switchTab('reports')" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted" id="mobile-nav-reports">
+      <i data-lucide="bar-chart-3" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Reports</span>
+    </button>
+  
+        <button onclick="window.location.href='/pages/assistant.html'" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300 mt-4 border border-slate-800">
+          <span class="flex items-center gap-3">
+            <i data-lucide="bot" class="h-4 w-4 text-brand-green"></i>
+            Talk to AI Assistant
+          </span>
+        </button>
+      </nav>
+
+  <!-- Controller Logic -->
+  <script type="module">
+    let staffUser = null;
+    let allOrders = [];
+    let allQuotations = [];
+    let customersList = [];
+    let productsList = [];
+    let pricingList = [];
+
+    // Initialize session and verify status
+    function initSession() {
+      const stored = localStorage.getItem('currentUser');
+      if (!stored) {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      
+      staffUser = JSON.parse(stored);
+      // Allow general admins and sales_admin subRole
+      const subRole = (staffUser.subRole || '').toLowerCase();
+      if (staffUser.role !== 'staff' && staffUser.role !== 'admin') {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+
+      // Fill header info
+      document.getElementById('staff_name_header').innerText = staffUser.name;
+      document.getElementById('sidebar_staff_name').innerText = staffUser.name;
+      document.getElementById('staff_role_header').innerText = staffUser.subRole || 'System Admin';
+      document.getElementById('sidebar_staff_role').innerText = staffUser.subRole || 'System Admin';
+      document.getElementById('staff_avatar').innerText = (staffUser.name || 'SA').substring(0, 2).toUpperCase();
+      
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('current_date_badge').innerText = `Date: ${new Date().toLocaleDateString('en-US', options)}`;
+
+      // Load data
+      loadAllData();
+    }
+
+    // Switch between panels/tabs
+    window.switchTab = function(tabName) {
+      const sections = ['overview', 'orders', 'quotations', 'customers', 'pricing', 'reports'];
+      sections.forEach(sec => {
+        const el = document.getElementById(`section-${sec}`);
+        if (el) {
+          if (sec === tabName) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        }
+
+        // Sidebar link class
+        const navBtn = document.getElementById(`nav-${sec}`);
+        if (navBtn) {
+          if (sec === tabName) {
+            navBtn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-green text-white";
+          } else {
+            navBtn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors";
+          }
+        }
+
+        // Mobile bottom navigation style
+        const mNavBtn = document.getElementById(`mobile-nav-${sec}`);
+        if (mNavBtn) {
+          if (sec === tabName) {
+            mNavBtn.className = "flex flex-col items-center justify-center flex-1 text-brand-green";
+            mNavBtn.querySelector('span').className = "text-[9px] font-semibold mt-1";
+          } else {
+            mNavBtn.className = "flex flex-col items-center justify-center flex-1 text-brand-text-muted";
+            mNavBtn.querySelector('span').className = "text-[9px] font-medium mt-1";
+          }
+        }
+      });
+    };
+
+    // Load data from staff routes
+    async function loadAllData() {
+      try {
+        const uid = staffUser.uid || staffUser.id;
+        
+        // Stats
+        const statsRes = await fetch('/staff/stats', {
+          headers: { 'Authorization': `Bearer ${uid}` }
+        });
+        if (statsRes.ok) {
+          const stats = await statsRes.json();
+          document.getElementById('stat_new_orders').innerText = stats.newOrdersToday || 0;
+          document.getElementById('stat_pending_approvals').innerText = stats.pendingApprovals || 0;
+          document.getElementById('stat_active_quotations').innerText = stats.activeQuotations || 0;
+          document.getElementById('stat_revenue_month').innerText = `₹${Number(stats.revenueThisMonth || 0).toLocaleString()}`;
+        }
+
+        // Orders
+        const ordersRes = await fetch('/staff/orders', {
+          headers: { 'Authorization': `Bearer ${uid}` }
+        });
+        if (ordersRes.ok) {
+          allOrders = await ordersRes.json();
+          renderOrders();
+        }
+
+        // Customers
+        const custRes = await fetch('/staff/customers', {
+          headers: { 'Authorization': `Bearer ${uid}` }
+        });
+        if (custRes.ok) {
+          customersList = await custRes.json();
+          renderCustomers();
+        }
+
+        // Products Catalog
+        const prodRes = await fetch('/staff/products', {
+          headers: { 'Authorization': `Bearer ${uid}` }
+        });
+        if (prodRes.ok) {
+          productsList = await prodRes.json();
+        }
+
+        // Contract pricing
+        const pricingRes = await fetch('/staff/contract-pricing', {
+          headers: { 'Authorization': `Bearer ${uid}` }
+        });
+        if (pricingRes.ok) {
+          pricingList = await pricingRes.json();
+          renderContractPricing();
+        }
+
+        // Quotations fallback or query
+        const quotesRes = await fetch('/customer/products', { // temporary fetch logic placeholder
+          headers: { 'Authorization': `Bearer ${uid}` }
+        });
+        // We will seed and fetch mock quotes
+        allQuotations = [
+          { quotationId: 'GMX-QUO-5001', customerName: 'Dr. Ramesh Kumar', proposedItems: 'N95 Surgical Mask (100 boxes)', totalAmount: 145000, status: 'sent', validUntil: '2026-07-15' }
+        ];
+        renderQuotations();
+
+        // Populate reports metrics
+        let delivered = 0;
+        let transit = 0;
+        allOrders.forEach(o => {
+          if (o.status === 'delivered') delivered++;
+          if (o.status === 'dispatched') transit++;
+        });
+        document.getElementById('report_delivered_count').innerText = delivered;
+        document.getElementById('report_transit_count').innerText = transit;
+
+      } catch (err) {
+        console.error("Error loading Sales Admin dashboard data:", err);
+      }
+    }
+
+    // Render pending approvals & order ledger
+    function renderOrders() {
+      // 1. Pending table
+      const pendingOrders = allOrders.filter(o => o.status === 'pending');
+      const approvalBody = document.getElementById('approval_table_body');
+      
+      if (pendingOrders.length === 0) {
+        approvalBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="p-8 text-center text-brand-text-muted">
+              Hurray! All bulk order requirements are authorized & cleared.
+            </td>
+          </tr>
+        `;
+      } else {
+        approvalBody.innerHTML = pendingOrders.map(o => {
+          const totalVal = o.orderTotal || o.total || 0;
+          return `
+            <tr class="hover:bg-slate-50">
+              <td class="p-4 font-bold text-brand-dark">${o.orderId || o.id}</td>
+              <td class="p-4 font-semibold text-slate-700">${o.customerName || 'B2B Procurement'}</td>
+              <td class="p-4 text-brand-text-muted">${o.institutionName || 'Hospital Partner'}</td>
+              <td class="p-4 text-right font-bold text-brand-dark">₹${totalVal.toLocaleString()}</td>
+              <td class="p-4 text-center">
+                <div class="flex items-center justify-center gap-2">
+                  <button onclick="approveOrder('${o.orderId || o.id}', '${o.customerPhone || ''}')" class="px-3 py-1 bg-brand-green hover:bg-brand-hover text-white rounded font-bold transition-all shadow-sm">
+                    Approve
+                  </button>
+                  <button onclick="rejectOrder('${o.orderId || o.id}')" class="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded font-bold transition-all">
+                    Reject
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 2. All orders table
+      const allBody = document.getElementById('all_orders_table_body');
+      if (allOrders.length === 0) {
+        allBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-brand-text-muted">No orders found in commercial ledger.</td>
+          </tr>
+        `;
+      } else {
+        allBody.innerHTML = allOrders.map(o => {
+          const totalVal = o.orderTotal || o.total || 0;
+          let statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
+          if (o.status === 'approved') statusColor = 'bg-teal-50 text-teal-700 border-teal-200';
+          if (o.status === 'packed') statusColor = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+          if (o.status === 'dispatched') statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
+          if (o.status === 'delivered') statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+          if (o.status === 'rejected' || o.status === 'failed') statusColor = 'bg-rose-50 text-rose-700 border-rose-200';
+
+          return `
+            <tr class="hover:bg-slate-50">
+              <td class="p-4 font-bold text-brand-dark">${o.orderId || o.id}</td>
+              <td class="p-4 text-slate-700 font-medium">${o.customerName || 'B2B Client'}</td>
+              <td class="p-4 text-brand-text-muted">${o.institutionName || 'Independent'}</td>
+              <td class="p-4 text-right font-bold text-brand-dark">₹${totalVal.toLocaleString()}</td>
+              <td class="p-4 text-center">
+                <span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold border ${statusColor} uppercase">
+                  ${o.status || 'pending'}
+                </span>
+              </td>
+              <td class="p-4 text-right">
+                <span class="text-[10px] text-brand-text-muted font-mono">${o.createdAt ? o.createdAt.split('T')[0] : 'N/A'}</span>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    // Approve Requisition & trigger WhatsApp redirect link
+    window.approveOrder = async function(orderId, phone) {
+      if (!(await window.ui.confirm(`Are you sure you want to AUTHORIZE & APPROVE Order: ${orderId}?`))) return;
+      try {
+        const uid = staffUser.uid || staffUser.id;
+        const res = await fetch(`/staff/orders/${orderId}/approve`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${uid}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (window.toast) window.toast.show(`Order ${orderId} has been successfully approved! Directing to WhatsApp notification...`, "success"); else alert(`Order ${orderId} has been successfully approved! Directing to WhatsApp notification...`);
+          
+          // Trigger WhatsApp
+          const phoneNum = phone || data.customerPhone || '9876543210';
+          const textMsg = encodeURIComponent(`Your order ${orderId} has been approved by Ganga Maxx. Expected delivery will be communicated shortly.`);
+          window.open(`https://wa.me/91${phoneNum.replace(/[^0-9]/g, '')}?text=${textMsg}`, '_blank');
+          
+          loadAllData();
+        } else {
+          if (window.toast) window.toast.show("Could not approve order.", "info"); else alert("Could not approve order.");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    // Reject order
+    window.rejectOrder = async function(orderId) {
+      const reason = prompt("Enter rejection reason comments:");
+      if (reason === null) return; // cancelled
+      
+      try {
+        const uid = staffUser.uid || staffUser.id;
+        const res = await fetch(`/staff/orders/${orderId}/reject`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${uid}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ reason })
+        });
+
+        if (res.ok) {
+          if (window.toast) window.toast.show(`Order ${orderId} has been rejected.`, "info"); else alert(`Order ${orderId} has been rejected.`);
+          loadAllData();
+        } else {
+          if (window.toast) window.toast.show("Could not reject order.", "info"); else alert("Could not reject order.");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+
+    // Render quotations
+    function renderQuotations() {
+      const body = document.getElementById('quotations_table_body');
+      body.innerHTML = allQuotations.map(q => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-4 font-bold text-brand-dark">${q.quotationId}</td>
+          <td class="p-4 font-semibold text-slate-700">${q.customerName}</td>
+          <td class="p-4 text-brand-text-muted font-medium">${q.proposedItems}</td>
+          <td class="p-4 text-right font-bold text-brand-dark">₹${q.totalAmount.toLocaleString()}</td>
+          <td class="p-4 text-center">
+            <span class="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase">${q.status}</span>
+          </td>
+          <td class="p-4 text-center text-brand-text-muted font-mono">${q.validUntil}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Render B2B Customers
+    function renderCustomers() {
+      const body = document.getElementById('customers_table_body');
+      if (customersList.length === 0) {
+        body.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-brand-text-muted">No partners registered yet.</td></tr>`;
+        return;
+      }
+      body.innerHTML = customersList.map(c => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-4 font-mono font-semibold text-[11px] text-brand-dark">${c.id}</td>
+          <td class="p-4 font-semibold text-slate-700">${c.name || 'Unnamed'}</td>
+          <td class="p-4 font-medium text-brand-text-muted">${c.institutionName || 'Independent'}</td>
+          <td class="p-4"><span class="px-1.5 py-0.5 rounded bg-slate-100 text-[10px] font-bold text-brand-dark uppercase">${c.institutionType || 'Pharmacy'}</span></td>
+          <td class="p-4 text-brand-text-muted font-semibold">${c.phone || c.whatsappNumber || 'N/A'}</td>
+          <td class="p-4 text-center">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${c.status === 'active' ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-rose-50 border border-rose-200 text-rose-700'} uppercase">
+              ${c.status || 'active'}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Render Contract override pricing
+    function renderContractPricing() {
+      const body = document.getElementById('pricing_table_body');
+      if (pricingList.length === 0) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-brand-text-muted">
+              No overrides defined. All customers are billed at standard catalogue rates.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      body.innerHTML = pricingList.map(p => `
+        <tr class="hover:bg-slate-50">
+          <td class="p-4 font-semibold text-brand-dark">${p.customerName || 'B2B Client'}</td>
+          <td class="p-4 font-semibold text-slate-700">${p.productName || 'Product'}</td>
+          <td class="p-4 text-brand-text-muted font-mono font-medium">${p.productId || 'SKU'}</td>
+          <td class="p-4 text-right font-black text-brand-green">₹${Number(p.contractPrice).toLocaleString()}/unit</td>
+          <td class="p-4 text-center text-brand-text-muted font-medium">${p.updatedBy || 'Staff'}</td>
+          <td class="p-4 text-right">
+            <button onclick="openPricingForm('${p.customerId}', '${p.productId}', ${p.contractPrice})" class="text-xs text-brand-green font-bold hover:underline">Edit Price</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Pricing overrides setup
+    window.openPricingForm = function(custId = '', prodId = '', price = '') {
+      // Clear selectors
+      const custSel = document.getElementById('pricing_customer_select');
+      const prodSel = document.getElementById('pricing_product_select');
+      
+      custSel.innerHTML = '<option value="">Choose partner...</option>' + customersList.map(c => `
+        <option value="${c.id}" ${c.id === custId ? 'selected' : ''}>${c.name} (${c.institutionName || 'Pharmacy'})</option>
+      `).join('');
+
+      prodSel.innerHTML = '<option value="">Choose catalog product...</option>' + productsList.map(p => `
+        <option value="${p.id}" ${p.id === prodId ? 'selected' : ''}>${p.name} (SKU: ${p.sku})</option>
+      `).join('');
+
+      document.getElementById('pricing_input').value = price;
+      document.getElementById('pricing_modal').classList.remove('hidden');
+    };
+
+    window.closePricingForm = function() {
+      document.getElementById('pricing_modal').classList.add('hidden');
+    };
+
+    window.savePricingOverride = async function(event) {
+      event.preventDefault();
+      const customerId = document.getElementById('pricing_customer_select').value;
+      const productId = document.getElementById('pricing_product_select').value;
+      const contractPrice = document.getElementById('pricing_input').value;
+
+      const customer = customersList.find(c => c.id === customerId);
+      const product = productsList.find(p => p.id === productId);
+
+      try {
+        const uid = staffUser.uid || staffUser.id;
+        const res = await fetch('/staff/contract-pricing', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${uid}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            customerId,
+            customerName: customer ? customer.name : 'Customer',
+            productId,
+            productName: product ? product.name : 'Product',
+            contractPrice
+          })
+        });
+
+        if (res.ok) {
+          if (window.toast) window.toast.show("Contract pricing successfully published!", "success"); else alert("Contract pricing successfully published!");
+          closePricingForm();
+          loadAllData();
+        } else {
+          if (window.toast) window.toast.show("Could not update contract pricing.", "info"); else alert("Could not update contract pricing.");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // Logout
+    window.handleLogout = function() {
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('subRole');
+      window.location.href = '/pages/login.html';
+    };
+
+    initSession();
+    lucide.createIcons();
+  </script>
+<script src="/components/chat-widget.js"></script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module">
+    import { initNotifications } from "/js/notifications.js";
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser && currentUser.uid) initNotifications(currentUser.uid);
+  </script>
+</body>
+</html>

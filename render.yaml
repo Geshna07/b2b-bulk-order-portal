@@ -1,0 +1,20 @@
+# Render.com Blueprint — deploys this Express app on the free tier.
+# In Render: New + > Blueprint > connect your GitHub repo > it reads this file.
+services:
+  - type: web
+    name: b2b-bulk-order-portal
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "20.18.0"
+      - key: FIREBASE_PROJECT_ID
+        value: startup-glass-23kpg
+      - key: FIREBASE_DATABASE_ID
+        value: ai-studio-b2bbulkorderport-a4a0694c-1e99-4e4c-b915-7c9a490b1e92
+      # Set these in the Render dashboard (don't commit secrets):
+      - key: GEMINI_API_KEY
+        sync: false

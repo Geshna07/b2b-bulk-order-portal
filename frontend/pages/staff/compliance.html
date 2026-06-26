@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compliance Admin Dashboard - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter & Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <!-- Importmap for standard Firebase resolve in browser -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-brand-border sticky top-0 z-40">
+    <div class="px-4 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-brand-green flex items-center justify-center text-white">
+          <i data-lucide="shield-check" class="h-5 w-5"></i>
+        </div>
+        <div>
+          <h1 class="font-bold tracking-tight text-sm uppercase text-brand-dark">Ganga Maxx</h1>
+          <p class="text-[10px] text-brand-green font-semibold tracking-wider">COMPLIANCE & LEGAL AUDIT</p>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-brand-green/10 text-brand-green font-bold flex items-center justify-center border border-brand-green/20" id="staff_avatar">
+            CO
+          </div>
+          <div class="text-left">
+            <h4 class="text-xs font-semibold leading-none" id="staff_name_header">Harish V.</h4>
+            <span class="text-[10px] text-brand-green font-bold tracking-wider" id="staff_role_header">Compliance Admin</span>
+          </div>
+        </div>
+        <button onclick="handleLogout()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md font-semibold text-rose-500 hover:bg-rose-50 transition-colors">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar and Content Layout -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-brand-border py-6 px-4 gap-6 shrink-0 justify-between">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 px-3 mb-4 py-2 border-b border-brand-border">
+          <i data-lucide="user" class="h-4.5 w-4.5 text-brand-green"></i>
+          <div>
+            <p class="text-xs font-bold text-brand-dark leading-none" id="sidebar_staff_name">Harish V.</p>
+            <span class="text-[9px] text-brand-text-muted" id="sidebar_staff_role">Compliance Admin</span>
+          </div>
+        </div>
+        <p class="text-[10px] font-bold tracking-wider text-brand-text-muted uppercase px-3 mb-2">My Workspace</p>
+        
+        <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-green text-white">
+          <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+          <span>Overview</span>
+        </button>
+        
+        <button onclick="switchTab('verifications')" id="nav-verifications" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="award" class="h-4 w-4"></i>
+          <span>Customer Verifications</span>
+        </button>
+        
+        <button onclick="switchTab('audits')" id="nav-audits" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="book-open" class="h-4 w-4"></i>
+          <span>Audit Logs</span>
+        </button>
+      </div>
+
+      <div class="bg-brand-green/5 rounded-lg p-4 border border-brand-green/10 text-xs">
+        <p class="font-bold text-brand-green mb-1">Drug License Audit</p>
+        <p class="text-brand-text-muted mb-2">Enforce state drug licenses regulations, verify active GST numbers, and maintain audit records.</p>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content Canvas -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      
+      <!-- TAB SECTION 1: OVERVIEW -->
+      <section id="section-overview" class="space-y-6">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-brand-dark">Compliance Overview</h2>
+          <p class="text-xs text-brand-text-muted">Enforce regulatory safety gates, verify drug distribution licenses, and inspect staff action audits.</p>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm border-l-4 border-l-amber-500">
+            <span class="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider block">Pending Verifications</span>
+            <h3 class="text-2xl font-black mt-2 text-amber-600" id="stat_pending_verifications">0</h3>
+            <span class="text-[9px] text-brand-text-muted font-medium mt-1">Awaiting drug-license checks</span>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm">
+            <span class="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider block">Active Accounts Verified</span>
+            <h3 class="text-2xl font-black mt-2 text-brand-dark" id="stat_active_acct_count">0</h3>
+            <span class="text-[9px] text-brand-green font-semibold mt-1">Legally cleared profiles</span>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm">
+            <span class="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider block">High Risk Triggers</span>
+            <h3 class="text-2xl font-black mt-2 text-brand-dark" id="stat_high_risk">0</h3>
+            <span class="text-[9px] text-brand-text-muted font-medium mt-1">No alerts detected</span>
+          </div>
+          <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm border-l-4 border-l-brand-green">
+            <span class="text-[10px] uppercase font-bold text-brand-text-muted tracking-wider block">Audited Logs Count</span>
+            <h3 class="text-2xl font-black mt-2 text-brand-green" id="stat_audited_logs">0</h3>
+            <span class="text-[9px] text-brand-green font-semibold mt-1">Complete trace records</span>
+          </div>
+        </div>
+
+        <!-- Compliance Quick Board -->
+        <div class="space-y-3">
+          <h3 class="text-xs font-bold text-brand-dark uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="award" class="h-4.5 w-4.5 text-brand-green"></i>
+            Buyers Awaiting License Review
+          </h3>
+          <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                    <th class="p-4">Customer</th>
+                    <th class="p-4">Drug License Number</th>
+                    <th class="p-4">GST Number</th>
+                    <th class="p-4 text-center">Status</th>
+                    <th class="p-4 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="overview_pending_verifications_body" class="divide-y divide-brand-border">
+                  <tr>
+                    <td colspan="5" class="p-6 text-center text-brand-text-muted">No pending verifications currently. All clear!</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB SECTION 2: CUSTOMER VERIFICATIONS -->
+      <section id="section-verifications" class="hidden space-y-4">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-brand-dark">Central Regulatory Verifications</h2>
+          <p class="text-xs text-brand-text-muted">Perform legal audits on hospital/pharmacy drug license registrations and tax credentials.</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                  <th class="p-4">B2B Corporate Account</th>
+                  <th class="p-4">Institution Category</th>
+                  <th class="p-4">Drug License No</th>
+                  <th class="p-4">GST Tax ID</th>
+                  <th class="p-4 text-center">Legal Status</th>
+                  <th class="p-4 text-right">Verification Action</th>
+                </tr>
+              </thead>
+              <tbody id="verifications_table_body" class="divide-y divide-brand-border">
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-brand-text-muted">Loading customer records list...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB SECTION 3: SYSTEM AUDIT LOGS -->
+      <section id="section-audits" class="hidden space-y-4">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-brand-dark">Direct Staff Audit Logs</h2>
+          <p class="text-xs text-brand-text-muted">Trace staff operations, order status updates, credit line alterations, and compliance logs.</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                  <th class="p-4">Timestamp</th>
+                  <th class="p-4">Responsible Actor</th>
+                  <th class="p-4">Role Label</th>
+                  <th class="p-4">Action Description</th>
+                  <th class="p-4">Event Status</th>
+                </tr>
+              </thead>
+              <tbody id="audits_table_body" class="divide-y divide-brand-border">
+                <tr>
+                  <td colspan="5" class="p-8 text-center text-brand-text-muted">Loading audit records...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Tab Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-brand-border h-16 flex items-center justify-around z-40 px-2 shadow-lg">
+    <button onclick="switchTab('overview')" class="flex flex-col items-center justify-center flex-1 text-brand-green" id="mobile-nav-overview">
+      <i data-lucide="layout-dashboard" class="h-5 w-5"></i>
+      <span class="text-[9px] font-semibold mt-1">Overview</span>
+    </button>
+    <button onclick="switchTab('verifications')" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted" id="mobile-nav-verifications">
+      <i data-lucide="award" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Verify</span>
+    </button>
+    <button onclick="switchTab('audits')" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted" id="mobile-nav-audits">
+      <i data-lucide="book-open" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Audits</span>
+    </button>
+  
+        <button onclick="window.location.href='/pages/assistant.html'" class="w-full flex items-center justify-between px-4 py-3 text-sm rounded-lg font-medium transition-colors hover:bg-slate-800 text-slate-300 mt-4 border border-slate-800">
+          <span class="flex items-center gap-3">
+            <i data-lucide="bot" class="h-4 w-4 text-brand-green"></i>
+            Talk to AI Assistant
+          </span>
+        </button>
+      </nav>
+
+  <!-- Controller Logic -->
+  <script type="module">
+    let complianceUser = null;
+    let customersList = [];
+    let auditLogs = [];
+
+    // Initialize session
+    function initSession() {
+      const stored = localStorage.getItem('currentUser');
+      if (!stored) {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      
+      complianceUser = JSON.parse(stored);
+      if (complianceUser.role !== 'staff' && complianceUser.role !== 'admin') {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+
+      // Display user details
+      document.getElementById('staff_name_header').innerText = complianceUser.name;
+      document.getElementById('sidebar_staff_name').innerText = complianceUser.name;
+      document.getElementById('staff_role_header').innerText = complianceUser.subRole || 'Compliance Admin';
+      document.getElementById('sidebar_staff_role').innerText = complianceUser.subRole || 'Compliance Admin';
+      document.getElementById('staff_avatar').innerText = (complianceUser.name || 'CO').substring(0, 2).toUpperCase();
+
+      loadComplianceWorkspace();
+    }
+
+    // Switch Panel Tabs
+    window.switchTab = function(tabName) {
+      const sections = ['overview', 'verifications', 'audits'];
+      sections.forEach(sec => {
+        const el = document.getElementById(`section-${sec}`);
+        if (el) {
+          if (sec === tabName) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        }
+
+        const navBtn = document.getElementById(`nav-${sec}`);
+        if (navBtn) {
+          if (sec === tabName) {
+            navBtn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-green text-white";
+          } else {
+            navBtn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors";
+          }
+        }
+
+        const mNavBtn = document.getElementById(`mobile-nav-${sec}`);
+        if (mNavBtn) {
+          if (sec === tabName) {
+            mNavBtn.className = "flex flex-col items-center justify-center flex-1 text-brand-green";
+            mNavBtn.querySelector('span').className = "text-[9px] font-semibold mt-1";
+          } else {
+            mNavBtn.className = "flex flex-col items-center justify-center flex-1 text-brand-text-muted";
+            mNavBtn.querySelector('span').className = "text-[9px] font-medium mt-1";
+          }
+        }
+      });
+    };
+
+    // Load compliance parameters
+    async function loadComplianceWorkspace() {
+      try {
+        const uid = complianceUser.uid || complianceUser.id;
+
+        // Fetch direct customer accounts list
+        const custRes = await fetch('/staff/customers', {
+          headers: { 'Authorization': `Bearer ${uid}` }
+        });
+        if (custRes.ok) {
+          customersList = await custRes.json();
+          renderVerifications();
+        }
+
+        // Fetch compliance audit events log
+        const auditsRes = await fetch('/staff/audits', {
+          headers: { 'Authorization': `Bearer ${uid}` }
+        });
+        if (auditsRes.ok) {
+          auditLogs = await auditsRes.json();
+          renderAuditLogs();
+        }
+
+        calculateStats();
+
+      } catch (err) {
+        console.error("Compliance admin setup failed:", err);
+      }
+    }
+
+    // Calculate metrics
+    function calculateStats() {
+      let pendingCount = 0;
+      let activeCount = 0;
+
+      customersList.forEach(c => {
+        if (c.status === 'pending' || c.status === 'pending_verification') pendingCount++;
+        else if (c.status === 'active') activeCount++;
+      });
+
+      document.getElementById('stat_pending_verifications').innerText = pendingCount;
+      document.getElementById('stat_active_acct_count').innerText = activeCount;
+      document.getElementById('stat_high_risk').innerText = 0;
+      document.getElementById('stat_audited_logs').innerText = auditLogs.length;
+    }
+
+    // Render regulatory tables
+    function renderVerifications() {
+      // 1. Overview table (Only showing pending approvals)
+      const overBody = document.getElementById('overview_pending_verifications_body');
+      const pendingAccounts = customersList.filter(c => c.status === 'pending' || c.status === 'pending_verification');
+
+      if (pendingAccounts.length === 0) {
+        overBody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-brand-text-muted">No buyer drug-licenses waiting for legal check. All clear!</td></tr>`;
+      } else {
+        overBody.innerHTML = pendingAccounts.slice(0, 5).map(c => `
+          <tr class="hover:bg-slate-50">
+            <td class="p-4">
+              <span class="font-bold text-brand-dark block">${c.name}</span>
+              <span class="text-[10px] text-brand-text-muted block mt-0.5">${c.institutionName || 'Independent'}</span>
+            </td>
+            <td class="p-4 font-mono font-semibold text-slate-700">${c.drugLicenseNumber || 'DL-88209221'}</td>
+            <td class="p-4 font-mono text-slate-500">${c.gstNumber || '33AAACG1202Z1ZO'}</td>
+            <td class="p-4 text-center">
+              <span class="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">PENDING LICENSE</span>
+            </td>
+            <td class="p-4 text-center">
+              <button onclick="verifyDrugLicense('${c.id}')" class="px-3 py-1 bg-brand-green hover:bg-brand-hover text-white rounded font-bold">Approve</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // 2. Full Verifications List
+      const fullBody = document.getElementById('verifications_table_body');
+      if (customersList.length === 0) {
+        fullBody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-brand-text-muted">No corporate accounts registered.</td></tr>`;
+        return;
+      }
+
+      fullBody.innerHTML = customersList.map(c => {
+        let statusBadge = '';
+        let actBtn = '';
+
+        if (c.status === 'active') {
+          statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 uppercase">Verified Active</span>`;
+          actBtn = `<span class="text-slate-400 font-semibold italic text-[11px]">Audit Compliant</span>`;
+        } else {
+          statusBadge = `<span class="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 border border-amber-200 text-amber-700 uppercase">Pending Review</span>`;
+          actBtn = `
+            <button onclick="verifyDrugLicense('${c.id}')" class="px-3 py-1 bg-brand-green hover:bg-brand-hover text-white font-bold text-[10px] rounded transition-all shadow-sm">
+              Approve License
+            </button>
+          `;
+        }
+
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="p-4 font-bold text-brand-dark">
+              <span>${c.name}</span>
+              <small class="text-brand-text-muted block font-medium mt-0.5">${c.institutionName || 'Pharmacy'}</small>
+            </td>
+            <td class="p-4"><span class="px-1.5 py-0.5 rounded bg-slate-100 text-[9px] font-bold text-slate-700 uppercase">${c.institutionType || 'Hospital'}</span></td>
+            <td class="p-4 font-mono font-semibold text-slate-600">${c.drugLicenseNumber || 'DL-20-401122'}</td>
+            <td class="p-4 font-mono text-slate-500">${c.gstNumber || '33AAACG9012F1Z8'}</td>
+            <td class="p-4 text-center">${statusBadge}</td>
+            <td class="p-4 text-right">${actBtn}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Approve Drug license triggers compliance verification
+    window.verifyDrugLicense = async function(customerId) {
+      if (!(await window.ui.confirm(`Are you sure you want to AUTHORIZE & VERIFY corporate credentials for customer ID: ${customerId}?`))) return;
+      try {
+        const uid = complianceUser.uid || complianceUser.id;
+        const res = await fetch(`/staff/customers/${customerId}/verify`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${uid}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (res.ok) {
+          if (window.toast) window.toast.show("Customer drug license successfully authorized! Account set to active.", "success"); else alert("Customer drug license successfully authorized! Account set to active.");
+          loadComplianceWorkspace();
+        } else {
+          if (window.toast) window.toast.show("Failed to authorize license.", "error"); else alert("Failed to authorize license.");
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // Render direct system events audit
+    function renderAuditLogs() {
+      const body = document.getElementById('audits_table_body');
+      if (auditLogs.length === 0) {
+        body.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-brand-text-muted">No recorded events in system audit logs database.</td></tr>`;
+        return;
+      }
+
+      body.innerHTML = auditLogs.map(log => {
+        const dateStr = log.timestamp ? new Date(log.timestamp).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : 'N/A';
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="p-4 font-mono text-brand-text-muted font-semibold text-[10px]">${dateStr}</td>
+            <td class="p-4 font-bold text-brand-dark">${log.actorName || 'Staff'}</td>
+            <td class="p-4 font-semibold text-slate-600 uppercase text-[9px] tracking-wider">${log.actorRole || 'Representative'}</td>
+            <td class="p-4 text-slate-700 font-medium">${log.actionDescription}</td>
+            <td class="p-4">
+              <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100 font-bold text-[9px] uppercase">COMPLETED</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Logout
+    window.handleLogout = function() {
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('subRole');
+      window.location.href = '/pages/login.html';
+    };
+
+    initSession();
+    lucide.createIcons();
+  </script>
+<script src="/components/chat-widget.js"></script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module">
+    import { initNotifications } from "/js/notifications.js";
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser && currentUser.uid) initNotifications(currentUser.uid);
+  </script>
+</body>
+</html>

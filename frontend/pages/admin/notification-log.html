@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Logs - Ganga Maxx Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              green: '#00A651',
+              dark: '#1a1a1a',
+              light: '#f5f5f5',
+              border: '#e5e7eb',
+              'text-dark': '#333333',
+              'text-muted': '#666666'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-brand-light font-sans text-brand-text-dark min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex items-center justify-between mb-8">
+      <div class="flex items-center gap-4">
+        <button onclick="window.history.back()" class="p-2 hover:bg-slate-200 rounded-full transition-colors">
+          <i data-lucide="arrow-left" class="w-5 h-5"></i>
+        </button>
+        <h1 class="text-2xl font-bold">WhatsApp Notification Logs</h1>
+      </div>
+      <button onclick="exportToCSV()" class="flex items-center gap-2 bg-brand-green text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-green/90 transition-colors">
+        <i data-lucide="download" class="w-4 h-4"></i>
+        Export CSV
+      </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white p-4 rounded-xl border border-brand-border shadow-sm mb-6 flex flex-wrap gap-4 items-end">
+      <div>
+        <label class="block text-xs font-medium text-brand-text-muted mb-1">Trigger Type</label>
+        <select id="filter_trigger" class="border border-brand-border rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-green">
+          <option value="ALL">All Triggers</option>
+          <option value="OTP_RESET">OTP Reset</option>
+          <option value="ORDER_PLACED">Order Placed</option>
+          <option value="ORDER_APPROVED">Order Approved</option>
+          <option value="ORDER_PACKED">Order Packed</option>
+          <option value="ORDER_DISPATCHED">Order Dispatched</option>
+          <option value="ORDER_DELIVERED">Order Delivered</option>
+          <option value="STAFF_APPROVED">Staff Approved</option>
+          <option value="STAFF_REJECTED">Staff Rejected</option>
+          <option value="REORDER_REMINDER">Reorder Reminder</option>
+          <option value="PAYMENT_DUE">Payment Due</option>
+          <option value="COMPLIANCE_REMINDER">Compliance Reminder</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-brand-text-muted mb-1">Date From</label>
+        <input type="date" id="filter_date_from" class="border border-brand-border rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-green">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-brand-text-muted mb-1">Date To</label>
+        <input type="date" id="filter_date_to" class="border border-brand-border rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-green">
+      </div>
+      <button onclick="loadLogs()" class="bg-slate-100 hover:bg-slate-200 text-brand-text-dark px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        Apply Filters
+      </button>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="bg-white border border-brand-border rounded-xl shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 border-b border-brand-border text-xs font-medium text-brand-text-muted uppercase tracking-wider">
+            <tr>
+              <th class="px-6 py-4">Timestamp</th>
+              <th class="px-6 py-4">To</th>
+              <th class="px-6 py-4">Trigger</th>
+              <th class="px-6 py-4">Message Preview</th>
+              <th class="px-6 py-4">Sent By</th>
+            </tr>
+          </thead>
+          <tbody id="logs_table_body" class="divide-y divide-brand-border">
+            <tr>
+              <td colspan="5" class="px-6 py-8 text-center text-brand-text-muted">Loading logs...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from '/firebase/firebaseConfig.js';
+    import { collection, query, orderBy, getDocs } from "firebase/firestore";
+    
+    let allLogs = [];
+
+    window.loadLogs = async function() {
+      const tbody = document.getElementById('logs_table_body');
+      tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-brand-text-muted">Loading...</td></tr>';
+      
+      try {
+        const logsRef = collection(db, 'whatsappLogs');
+        const q = query(logsRef, orderBy('timestamp', 'desc'));
+        const snapshot = await getDocs(q);
+        
+        allLogs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestampDate: doc.data().timestamp?.toDate() || new Date()
+        }));
+
+        renderLogs();
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">Failed to load logs.</td></tr>';
+      }
+    };
+
+    function renderLogs() {
+      const triggerFilter = document.getElementById('filter_trigger').value;
+      const dateFromStr = document.getElementById('filter_date_from').value;
+      const dateToStr = document.getElementById('filter_date_to').value;
+      
+      let dateFrom = dateFromStr ? new Date(dateFromStr) : null;
+      if (dateFrom) dateFrom.setHours(0,0,0,0);
+      
+      let dateTo = dateToStr ? new Date(dateToStr) : null;
+      if (dateTo) dateTo.setHours(23,59,59,999);
+
+      const filtered = allLogs.filter(log => {
+        if (triggerFilter !== 'ALL' && log.trigger !== triggerFilter) return false;
+        if (dateFrom && log.timestampDate < dateFrom) return false;
+        if (dateTo && log.timestampDate > dateTo) return false;
+        return true;
+      });
+
+      const tbody = document.getElementById('logs_table_body');
+      
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-brand-text-muted">No logs found matching filters.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(log => {
+        const preview = log.message ? log.message.substring(0, 50).replace(/\n/g, ' ') + (log.message.length > 50 ? '...' : '') : '';
+        return `
+          <tr class="hover:bg-slate-50 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap text-brand-text-muted">
+              ${log.timestampDate.toLocaleString()}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap font-medium">
+              ${log.to || '-'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800">
+                ${log.trigger}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-brand-text-muted max-w-xs truncate" title="${log.message}">
+              ${preview}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-brand-text-muted">
+              ${log.openedBy || 'system'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.exportToCSV = function() {
+      if (allLogs.length === 0) return;
+      
+      const headers = ['Timestamp', 'To', 'Trigger', 'Message', 'Sent By'];
+      const rows = allLogs.map(log => [
+        log.timestampDate.toISOString(),
+        log.to,
+        log.trigger,
+        '"' + (log.message || '').replace(/"/g, '""') + '"',
+        log.openedBy
+      ]);
+      
+      const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "whatsapp_logs.csv");
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    // Load initially
+    loadLogs();
+  </script>
+  <script>
+    lucide.createIcons();
+  </script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module">
+    import { initNotifications } from "/js/notifications.js";
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser && currentUser.uid) initNotifications(currentUser.uid);
+  </script>
+</body>
+</html>

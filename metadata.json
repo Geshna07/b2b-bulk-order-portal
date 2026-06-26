@@ -1,0 +1,6 @@
+{
+  "name": "B2B Bulk Order Portal",
+  "description": "B2B Bulk Order Portal for Ganga Maxx Marketplace. Features quick order sheet uploads, catalog lookup, order tracking, and account management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

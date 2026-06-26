@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Orders - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter & Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Importmap for Firebase -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-brand-border sticky top-0 z-40">
+    <div class="px-4 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-brand-green flex items-center justify-center text-white">
+          <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+        </div>
+        <div>
+          <h1 class="font-bold tracking-tight text-sm uppercase text-brand-dark">Ganga Maxx</h1>
+          <p class="text-[10px] text-brand-green font-semibold tracking-wider">B2B MARKETPLACE</p>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-4">
+        <!-- Notification bell -->
+        <button id="notification_bell" class="relative p-2 text-brand-text-muted hover:text-brand-dark transition-colors rounded-full hover:bg-slate-100">
+          <i data-lucide="bell" class="h-5 w-5"></i>
+          <span class="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-rose-500 border border-white hidden"></span>
+        </button>
+
+        <!-- Vertical Divider -->
+        <span class="h-6 w-px bg-brand-border"></span>
+
+        <!-- User Info -->
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-brand-green/10 text-brand-green font-bold flex items-center justify-center border border-brand-green/20" id="user_avatar">
+            CU
+          </div>
+          <div class="hidden sm:block text-left">
+            <h4 class="text-xs font-semibold leading-none" id="user_name">B2B Partner</h4>
+            <span class="text-[10px] text-brand-text-muted font-medium" id="user_institution">Hospital</span>
+          </div>
+        </div>
+
+        <!-- Logout button -->
+        <button onclick="window.handleLogout()" class="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-md font-semibold text-rose-500 hover:bg-rose-50 transition-colors">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Frame -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar Navigation for Desktop -->
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-brand-border py-6 px-4 gap-6 shrink-0 justify-between">
+      <div class="space-y-1">
+        <p class="text-[10px] font-bold tracking-wider text-brand-text-muted uppercase px-3 mb-2">Workspace</p>
+        
+        <a href="/pages/customer/dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="home" class="h-4 w-4"></i>
+          <span>Home Dashboard</span>
+        </a>
+        
+        <a href="/pages/customer/products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="grid" class="h-4 w-4"></i>
+          <span>Product Catalog</span>
+        </a>
+        
+        <a href="/pages/customer/place-order.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="clipboard-list" class="h-4 w-4"></i>
+          <span>Bulk Order Entry</span>
+        </a>
+        
+        <a href="/pages/customer/my-orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-green text-white">
+          <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+          <span>My Orders</span>
+        </a>
+        
+        <a href="/pages/customer/quotation.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="file-text" class="h-4 w-4"></i>
+          <span>Quotations</span>
+        </a>
+        
+        <button onclick="document.getElementById('gm_chat_bubble').click()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-green hover:bg-brand-green hover:text-white transition-colors border border-brand-green/20 mt-4">
+          <i data-lucide="bot" class="h-4 w-4"></i>
+          <span>Talk to AI Assistant</span>
+        </button>
+      </div>
+
+      <!-- Quick support contact -->
+      <div class="bg-brand-green/5 rounded-lg p-4 border border-brand-green/10 text-xs">
+        <p class="font-bold text-brand-green mb-1">Ganga Maxx Support</p>
+        <p class="text-brand-text-muted mb-3">Order tracking help or priority transport requisitions.</p>
+        <a href="https://wa.me/919999999999" target="_blank" class="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-brand-green hover:bg-brand-hover text-white rounded font-medium transition-colors">
+          <i data-lucide="phone" class="h-3.5 w-3.5"></i>
+          WhatsApp Support
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content Canvas -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 md:pb-8">
+      
+      <div class="mb-6">
+        <h2 class="text-xl font-bold tracking-tight text-brand-dark">Requisition & Orders History</h2>
+        <p class="text-xs text-brand-text-muted">Track all submissions, copy items into new carts, or download tax invoices instantly.</p>
+      </div>
+
+      <!-- Orders Archive Table -->
+      <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                <th class="p-4">Order ID</th>
+                <th class="p-4">Submission Date</th>
+                <th class="p-4">Items Count</th>
+                <th class="p-4 text-right">Invoice Total</th>
+                <th class="p-4 text-center">Dispatch Status</th>
+                <th class="p-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders_table_body" class="divide-y divide-brand-border">
+              <tr>
+                <td colspan="6" class="p-12 text-center text-brand-text-muted">
+                  Loading order history...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Detailed View Drawer / Modal -->
+  <div id="detail_modal" class="fixed inset-0 bg-brand-dark/50 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full p-6 shadow-2xl border border-brand-border space-y-6 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Detail Header -->
+      <div class="flex items-center justify-between border-b border-brand-border pb-4">
+        <div>
+          <span class="text-[9px] font-bold text-brand-green bg-brand-green/10 px-2 py-0.5 rounded uppercase" id="detail_tag">B2B REQUISITION</span>
+          <h3 class="font-bold text-base text-brand-dark mt-1" id="detail_order_id">GMX-ORD-XXXXX</h3>
+          <p class="text-[10px] text-brand-text-muted" id="detail_order_date">Submitted: June 26, 2026</p>
+        </div>
+        <button onclick="toggleDetailModal(false)" class="p-1.5 rounded-full hover:bg-slate-100">
+          <i data-lucide="x" class="h-4.5 w-4.5"></i>
+        </button>
+      </div>
+
+      <!-- Visual Stepper timeline: Pending -> Approved -> Packed -> Dispatched -> Delivered -->
+      <div class="space-y-3">
+        <h4 class="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">Order Timeline</h4>
+        
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-2 p-4 bg-slate-50 rounded-lg border border-brand-border text-[11px]">
+          <!-- Step 1: Pending -->
+          <div class="flex flex-col items-center flex-1 text-center space-y-1" id="step_pending">
+            <div class="h-7 w-7 rounded-full flex items-center justify-center font-bold border-2 bg-slate-200 text-slate-500" id="step_icon_pending">1</div>
+            <span class="font-semibold text-brand-dark">Pending</span>
+            <span class="text-[9px] text-brand-text-muted">Registered</span>
+          </div>
+
+          <div class="hidden sm:block h-0.5 bg-slate-200 flex-1" id="step_line_1"></div>
+
+          <!-- Step 2: Approved -->
+          <div class="flex flex-col items-center flex-1 text-center space-y-1" id="step_approved">
+            <div class="h-7 w-7 rounded-full flex items-center justify-center font-bold border-2 bg-slate-200 text-slate-500" id="step_icon_approved">2</div>
+            <span class="font-semibold text-brand-dark">Approved</span>
+            <span class="text-[9px] text-brand-text-muted">Credit Check</span>
+          </div>
+
+          <div class="hidden sm:block h-0.5 bg-slate-200 flex-1" id="step_line_2"></div>
+
+          <!-- Step 3: Packed -->
+          <div class="flex flex-col items-center flex-1 text-center space-y-1" id="step_packed">
+            <div class="h-7 w-7 rounded-full flex items-center justify-center font-bold border-2 bg-slate-200 text-slate-500" id="step_icon_packed">3</div>
+            <span class="font-semibold text-brand-dark">Packed</span>
+            <span class="text-[9px] text-brand-text-muted">In Warehouse</span>
+          </div>
+
+          <div class="hidden sm:block h-0.5 bg-slate-200 flex-1" id="step_line_3"></div>
+
+          <!-- Step 4: Dispatched -->
+          <div class="flex flex-col items-center flex-1 text-center space-y-1" id="step_dispatched">
+            <div class="h-7 w-7 rounded-full flex items-center justify-center font-bold border-2 bg-slate-200 text-slate-500" id="step_icon_dispatched">4</div>
+            <span class="font-semibold text-brand-dark">Dispatched</span>
+            <span class="text-[9px] text-brand-text-muted">Transit</span>
+          </div>
+
+          <div class="hidden sm:block h-0.5 bg-slate-200 flex-1" id="step_line_4"></div>
+
+          <!-- Step 5: Delivered -->
+          <div class="flex flex-col items-center flex-1 text-center space-y-1" id="step_delivered">
+            <div class="h-7 w-7 rounded-full flex items-center justify-center font-bold border-2 bg-slate-200 text-slate-500" id="step_icon_delivered">5</div>
+            <span class="font-semibold text-brand-dark">Delivered</span>
+            <span class="text-[9px] text-brand-text-muted">Closed</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Itemized list -->
+      <div class="space-y-3">
+        <h4 class="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">Itemized Line Items</h4>
+        <div class="border border-brand-border rounded-lg overflow-hidden text-xs">
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-brand-border font-bold text-brand-text-muted text-[10px]">
+                <th class="p-3 text-left">Product Name</th>
+                <th class="p-3 text-center">Unit</th>
+                <th class="p-3 text-right">Price/Unit</th>
+                <th class="p-3 text-center">Qty</th>
+                <th class="p-3 text-right">Line Total</th>
+              </tr>
+            </thead>
+            <tbody id="detail_items_body" class="divide-y divide-brand-border">
+              <!-- Dynamically rendered -->
+            </tbody>
+            <tfoot>
+              <tr class="border-t border-brand-border text-brand-text-muted">
+                <td colspan="4" class="p-3 text-right">Subtotal:</td>
+                <td class="p-3 text-right font-semibold text-brand-dark" id="detail_subtotal">₹0</td>
+              </tr>
+              <tr class="text-brand-text-muted">
+                <td colspan="4" class="p-3 text-right">GST (18% Standard):</td>
+                <td class="p-3 text-right font-semibold text-brand-dark" id="detail_gst">₹0</td>
+              </tr>
+              <tr class="font-bold text-brand-dark border-t border-brand-border">
+                <td colspan="4" class="p-3 text-right">Grand Total:</td>
+                <td class="p-3 text-right text-brand-green" id="detail_grand_total">₹0</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Notes and Address Info -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 p-4 border border-brand-border rounded-lg">
+        <div>
+          <span class="font-bold text-brand-text-muted block uppercase text-[9px]">Logistics Target Address</span>
+          <p class="mt-1 text-brand-dark font-medium leading-relaxed" id="detail_address">No address provided</p>
+        </div>
+        <div>
+          <span class="font-bold text-brand-text-muted block uppercase text-[9px]">Procurement Instructions</span>
+          <p class="mt-1 text-brand-dark italic leading-relaxed" id="detail_notes">No instructions attached</p>
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex items-center justify-between pt-4 border-t border-brand-border">
+        <a href="#" target="_blank" id="wa_track_btn" class="flex items-center gap-2 py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-xs transition-colors">
+          <i data-lucide="phone" class="h-4 w-4"></i>
+          WhatsApp Track
+        </a>
+
+        <div class="flex items-center gap-2">
+          <button onclick="triggerPrintInvoice()" class="flex items-center gap-1.5 py-2 px-4 border border-brand-border hover:bg-slate-50 font-bold rounded text-xs text-brand-text-muted">
+            <i data-lucide="printer" class="h-4 w-4"></i>
+            Download Invoice (PDF)
+          </button>
+          <button onclick="toggleDetailModal(false)" class="py-2 px-4 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded text-xs">
+            Close Panel
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Print-Only Styled Invoice Container (Hidden in screen media, shown in print media) -->
+  <div id="print_invoice_element" class="hidden">
+    <!-- Printed page structure style is computed below -->
+  </div>
+
+  <!-- Mobile Bottom Tab Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-brand-border h-16 flex items-center justify-around z-40 px-2 shadow-lg">
+    <a href="/pages/customer/dashboard.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="home" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Home</span>
+    </a>
+    <a href="/pages/customer/products.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="grid" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Products</span>
+    </a>
+    <a href="/pages/customer/place-order.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="clipboard-list" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">New Order</span>
+    </a>
+    <a href="/pages/customer/my-orders.html" class="flex flex-col items-center justify-center flex-1 text-brand-green">
+      <i data-lucide="shopping-cart" class="h-5 w-5"></i>
+      <span class="text-[9px] font-semibold mt-1">Orders</span>
+    </a>
+  </nav>
+
+  <!-- Firebase Scripts & Controller -->
+  <script type="module">
+    import { generateInvoice } from "/js/invoice.js";
+
+    import { auth, db } from '/firebase/firebaseConfig.js';
+    import { onAuthStateChanged, signOut } from 'firebase/auth';
+    import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+
+    let allOrders = [];
+    let currentUser = null;
+    let currentlyViewingOrder = null;
+
+    // Load active session
+    function initSession() {
+      const stored = localStorage.getItem('currentUser');
+      if (!stored) {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      
+      currentUser = JSON.parse(stored);
+      if (currentUser.role !== 'customer') {
+        localStorage.removeItem('currentUser');
+        window.location.href = '/pages/login.html';
+        return;
+      }
+
+      // Populate layout
+      document.getElementById('user_name').innerText = currentUser.name || 'B2B Client';
+      document.getElementById('user_institution').innerText = currentUser.institutionName || 'Ganga Maxx Partner';
+      document.getElementById('user_avatar').innerText = (currentUser.name || 'CU').substring(0, 2).toUpperCase();
+
+      // Load orders database
+      fetchCustomerOrders();
+    }
+
+    // Fetch orders via direct query
+    async function fetchCustomerOrders() {
+      try {
+        const uid = currentUser.uid || currentUser.id;
+
+        const response = await fetch(`/customer/orders/${uid}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${uid}`, // Bearer token validation
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load customer orders from backend api");
+        }
+
+        allOrders = await response.json();
+        renderOrdersList();
+      } catch (err) {
+        console.warn("Backend API route load failed, trying direct Firestore client query fallback:", err);
+        try {
+          const ordersRef = collection(db, 'orders');
+          const q = query(ordersRef, where('customerId', '==', (currentUser.uid || currentUser.id)));
+          const snapshot = await getDocs(q);
+
+          allOrders = [];
+          snapshot.forEach(doc => {
+            allOrders.push({ id: doc.id, ...doc.data() });
+          });
+
+          // Sort date descending
+          allOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          renderOrdersList();
+        } catch (dbErr) {
+          console.error("Direct Firestore fallback also failed:", dbErr);
+          document.getElementById('orders_table_body').innerHTML = `
+            <tr>
+              <td colspan="6" class="p-8 text-center text-rose-500 font-bold">
+                Failed to fetch orders from database.
+              </td>
+            </tr>
+          `;
+        }
+      }
+    }
+
+    // Render list
+    function renderOrdersList() {
+      const body = document.getElementById('orders_table_body');
+      if (allOrders.length === 0) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-brand-text-muted">
+              You haven't placed any bulk orders yet. Click "Bulk Order Entry" to submit your first requisition.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      body.innerHTML = allOrders.map(ord => {
+        const orderIdClean = ord.orderId || ord.id;
+        const dateStr = ord.createdAt ? new Date(ord.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        }) : 'N/A';
+        const count = ord.items ? ord.items.reduce((acc, curr) => acc + (curr.qty || 1), 0) : 0;
+        const totalVal = ord.total || ord.orderTotal || 0;
+
+        let statusColor = 'bg-amber-50 text-amber-700 border-amber-200';
+        if (ord.status === 'delivered') statusColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if (ord.status === 'dispatched') statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
+        if (ord.status === 'cancelled') statusColor = 'bg-rose-50 text-rose-700 border-rose-200';
+
+        return `
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="p-4 font-bold text-brand-dark">${orderIdClean}</td>
+            <td class="p-4 text-brand-text-muted">${dateStr}</td>
+            <td class="p-4 font-medium text-slate-600">${count} packs</td>
+            <td class="p-4 text-right font-bold text-brand-dark">₹${Number(totalVal).toLocaleString()}</td>
+            <td class="p-4 text-center">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ${statusColor} uppercase">
+                ${ord.status || 'pending'}
+              </span>
+            </td>
+            <td class="p-4 text-right">
+              <div class="flex items-center justify-end gap-2">
+                <button onclick="viewOrderDetails('${ord.id || ord.orderId}')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-brand-dark font-semibold rounded transition-all text-[11px] flex items-center gap-1">
+                  <i data-lucide="eye" class="h-3 w-3"></i>
+                  View
+                </button>
+                <button onclick="reorderPrevious('${ord.id || ord.orderId}')" class="px-2.5 py-1.5 bg-brand-green hover:bg-brand-hover text-white font-semibold rounded transition-all text-[11px] flex items-center gap-1 shadow-sm">
+                  <i data-lucide="refresh-cw" class="h-3 w-3"></i>
+                  Reorder
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    // Reorder copy items action
+    window.reorderPrevious = function(orderId) {
+      const ord = allOrders.find(o => (o.id === orderId || o.orderId === orderId));
+      if (!ord) return;
+
+      if (ord.items && ord.items.length > 0) {
+        sessionStorage.setItem('reorder_items_cache', JSON.stringify(ord.items));
+        if (window.toast) window.toast.show("Copied items from this order into a new cart! Redirecting to Bulk Order Entry...", "info"); else alert("Copied items from this order into a new cart! Redirecting to Bulk Order Entry...");
+        window.location.href = '/pages/customer/place-order.html';
+      } else {
+        if (window.toast) window.toast.show("This order has no items to copy.", "error"); else alert("This order has no items to copy.");
+      }
+    };
+
+    // Toggle Details Modal Drawer
+    window.toggleDetailModal = function(show) {
+      const modal = document.getElementById('detail_modal');
+      if (show) {
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    };
+
+    // View Details panel with timeline and item receipt
+    window.viewOrderDetails = function(orderId) {
+      const ord = allOrders.find(o => (o.id === orderId || o.orderId === orderId));
+      if (!ord) return;
+
+      currentlyViewingOrder = ord;
+
+      // Populate basic texts
+      document.getElementById('detail_order_id').innerText = ord.orderId || ord.id;
+      
+      const dateStr = ord.createdAt ? new Date(ord.createdAt).toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      }) : 'N/A';
+      document.getElementById('detail_order_date').innerText = `Submitted: ${dateStr}`;
+
+      // Set logistic address and notes
+      const addr = ord.deliveryAddress || {};
+      const fullAddr = `${addr.street || 'No street specified'}, ${addr.city || 'Chennai'}, ${addr.state || 'Tamil Nadu'} - ${addr.pincode || '600001'}`;
+      document.getElementById('detail_address').innerText = fullAddr;
+      document.getElementById('detail_notes').innerText = ord.notes || 'No custom procurement comments left.';
+
+      // Stepper logic
+      updateTimelineStepper(ord.status || 'pending');
+
+      // Populate table receipt
+      const itemsBody = document.getElementById('detail_items_body');
+      const itemsList = ord.items || [];
+      
+      let itemsSubtotal = 0;
+      itemsBody.innerHTML = itemsList.map(item => {
+        const price = Number(item.pricePerUnit || 0);
+        const qty = Number(item.qty || 1);
+        const lineTotal = price * qty;
+        itemsSubtotal += lineTotal;
+
+        return `
+          <tr>
+            <td class="p-3">
+              <p class="font-bold text-brand-dark">${item.productName}</p>
+              <p class="text-[9px] text-brand-text-muted mt-0.5">${item.productId}</p>
+            </td>
+            <td class="p-3 text-center">${item.unit || 'Box'}</td>
+            <td class="p-3 text-right">₹${price.toLocaleString()}</td>
+            <td class="p-3 text-center font-bold">${qty}</td>
+            <td class="p-3 text-right font-bold text-slate-800">₹${lineTotal.toLocaleString()}</td>
+          </tr>
+        `;
+      }).join('');
+
+      // Calculations standard GST 18% standard invoice
+      const gstAmt = Math.round(itemsSubtotal * 0.18);
+      const grandTotal = itemsSubtotal + gstAmt;
+
+      document.getElementById('detail_subtotal').innerText = `₹${itemsSubtotal.toLocaleString()}`;
+      document.getElementById('detail_gst').innerText = `₹${gstAmt.toLocaleString()}`;
+      document.getElementById('detail_grand_total').innerText = `₹${grandTotal.toLocaleString()}`;
+
+      // WhatsApp Tracking redirect link
+      const adminPhoneNum = '9999999999';
+      const textMessage = encodeURIComponent(`Hello Ganga Maxx team! I would like to track my B2B order: ${ord.orderId || ord.id}. Can you provide dispatch details?`);
+      document.getElementById('wa_track_btn').href = `https://wa.me/91${adminPhoneNum}?text=${textMessage}`;
+
+      toggleDetailModal(true);
+    };
+
+    // Stepper styling compiler
+    function updateTimelineStepper(currentStatus) {
+      const steps = ['pending', 'approved', 'packed', 'dispatched', 'delivered'];
+      const currentIdx = steps.indexOf(currentStatus.toLowerCase());
+
+      steps.forEach((step, idx) => {
+        const stepEl = document.getElementById(`step_${step}`);
+        const iconEl = document.getElementById(`step_icon_${step}`);
+        const lineEl = document.getElementById(`step_line_${idx + 1}`);
+
+        if (idx <= currentIdx) {
+          // Completed or active step style
+          iconEl.className = "h-7 w-7 rounded-full flex items-center justify-center font-bold border-2 border-brand-green bg-brand-green text-white";
+          if (lineEl) {
+            lineEl.className = "hidden sm:block h-0.5 bg-brand-green flex-1";
+          }
+        } else {
+          // Inactive step style
+          iconEl.className = "h-7 w-7 rounded-full flex items-center justify-center font-bold border-2 border-slate-200 bg-white text-slate-400";
+          if (lineEl) {
+            lineEl.className = "hidden sm:block h-0.5 bg-slate-200 flex-1";
+          }
+        }
+      });
+    }
+
+    // Client-side print invoice action
+    
+    window.triggerPrintInvoice = function() {
+      if (!currentlyViewingOrder) return;
+      generateInvoice(currentlyViewingOrder, currentlyViewingOrder.items || []);
+    };
+
+    // Logout
+    window.handleLogout = async function() {
+      try {
+        await signOut(auth);
+      } catch (e) {}
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('subRole');
+      window.location.href = '/pages/login.html';
+    };
+
+    initSession();
+    lucide.createIcons();
+  </script>
+
+  <script src="/js/toast.js"></script>
+  <script src="/components/chat-widget.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module">
+    import { initNotifications } from "/js/notifications.js";
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser && currentUser.uid) initNotifications(currentUser.uid);
+  </script>
+</body>
+</html>

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quotation Request - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter & Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Importmap for Firebase -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-brand-border sticky top-0 z-40">
+    <div class="px-4 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-brand-green flex items-center justify-center text-white">
+          <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+        </div>
+        <div>
+          <h1 class="font-bold tracking-tight text-sm uppercase text-brand-dark">Ganga Maxx</h1>
+          <p class="text-[10px] text-brand-green font-semibold tracking-wider">B2B MARKETPLACE</p>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-4">
+        <!-- User Info -->
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-brand-green/10 text-brand-green font-bold flex items-center justify-center border border-brand-green/20" id="user_avatar">
+            CU
+          </div>
+          <div class="hidden sm:block text-left">
+            <h4 class="text-xs font-semibold leading-none" id="user_name">B2B Partner</h4>
+            <span class="text-[10px] text-brand-text-muted font-medium" id="user_institution">Hospital</span>
+          </div>
+        </div>
+
+        <!-- Logout button -->
+        <button onclick="window.handleLogout()" class="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-md font-semibold text-rose-500 hover:bg-rose-50 transition-colors">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Frame -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar Navigation for Desktop -->
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-brand-border py-6 px-4 gap-6 shrink-0 justify-between">
+      <div class="space-y-1">
+        <p class="text-[10px] font-bold tracking-wider text-brand-text-muted uppercase px-3 mb-2">Workspace</p>
+        
+        <a href="/pages/customer/dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="home" class="h-4 w-4"></i>
+          <span>Home Dashboard</span>
+        </a>
+        
+        <a href="/pages/customer/products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="grid" class="h-4 w-4"></i>
+          <span>Product Catalog</span>
+        </a>
+        
+        <a href="/pages/customer/place-order.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="clipboard-list" class="h-4 w-4"></i>
+          <span>Bulk Order Entry</span>
+        </a>
+        
+        <a href="/pages/customer/my-orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+          <span>My Orders</span>
+        </a>
+        
+        <a href="/pages/customer/quotation.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-green text-white">
+          <i data-lucide="file-text" class="h-4 w-4"></i>
+          <span>Quotations</span>
+        </a>
+        
+        <button onclick="document.getElementById('gm_chat_bubble').click()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-green hover:bg-brand-green hover:text-white transition-colors border border-brand-green/20 mt-4">
+          <i data-lucide="bot" class="h-4 w-4"></i>
+          <span>Talk to AI Assistant</span>
+        </button>
+      </div>
+
+      <!-- Quick support contact -->
+      <div class="bg-brand-green/5 rounded-lg p-4 border border-brand-green/10 text-xs">
+        <p class="font-bold text-brand-green mb-1">Ganga Maxx Support</p>
+        <p class="text-brand-text-muted mb-3">Custom pricing inquiries or bulk bid proposals?</p>
+        <a href="https://wa.me/919999999999" target="_blank" class="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-brand-green hover:bg-brand-hover text-white rounded font-medium transition-colors">
+          <i data-lucide="phone" class="h-3.5 w-3.5"></i>
+          WhatsApp Support
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content Canvas -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 md:pb-8">
+      
+      <div class="mb-6">
+        <h2 class="text-xl font-bold tracking-tight text-brand-dark">Request Custom Quotation</h2>
+        <p class="text-xs text-brand-text-muted">Propose bespoke target volume pricing rates for any combination of medical inventory.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left columns: Custom Quotation request grid -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-brand-border">
+              <h3 class="font-bold text-sm text-brand-dark">Bid & Quotation Form</h3>
+              <p class="text-[10px] text-brand-text-muted mt-0.5">Specify desired quantities. Ganga Maxx compliance officers will draft custom rates.</p>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                    <th class="p-4">Product Name</th>
+                    <th class="p-4">SKU</th>
+                    <th class="p-4 text-right">Standard Rate</th>
+                    <th class="p-4 text-center">Your Target Qty</th>
+                  </tr>
+                </thead>
+                <tbody id="quotation_table_body" class="divide-y divide-brand-border">
+                  <tr>
+                    <td colspan="4" class="p-8 text-center text-brand-text-muted">
+                      Loading products list...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Logistics and Notes -->
+          <div class="bg-white rounded-xl border border-brand-border p-5 shadow-sm space-y-4">
+            <h4 class="text-xs font-bold uppercase text-brand-text-muted tracking-wider">Quotation Notes & Logistics</h4>
+            
+            <div>
+              <label class="block text-[10px] font-bold text-brand-text-muted uppercase">Bespoke Proposal Details</label>
+              <textarea id="qtn_notes" rows="3" class="w-full mt-1 p-2.5 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none" placeholder="e.g. Requesting a 12% additional volume discount for high-frequency paracetamol surgical masks delivery..."></textarea>
+            </div>
+
+            <div>
+              <button onclick="submitQuotationRequest()" id="submit_qtn_btn" class="w-full py-3 bg-brand-green hover:bg-brand-hover text-white rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 shadow">
+                <i data-lucide="file-text" class="h-4 w-4"></i>
+                Submit Proposal Bid for Review
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right column: Past Quotation Submissions Archive with Status Badges -->
+        <div class="space-y-6">
+          <div class="bg-white rounded-xl border border-brand-border p-5 shadow-sm space-y-4">
+            <h3 class="font-bold text-sm text-brand-dark border-b border-brand-border pb-3">Past Proposals</h3>
+            
+            <div class="divide-y divide-brand-border" id="quotations_archive_list">
+              <div class="py-4 text-center text-xs text-brand-text-muted">
+                Loading quotations archive...
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Tab Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-brand-border h-16 flex items-center justify-around z-40 px-2 shadow-lg">
+    <a href="/pages/customer/dashboard.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="home" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Home</span>
+    </a>
+    <a href="/pages/customer/products.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="grid" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Products</span>
+    </a>
+    <a href="/pages/customer/place-order.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="clipboard-list" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">New Order</span>
+    </a>
+    <a href="/pages/customer/my-orders.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="shopping-cart" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Orders</span>
+    </a>
+  </nav>
+
+  <!-- Firebase Scripts & Controller -->
+  <script type="module">
+    import { auth, db } from '/firebase/firebaseConfig.js';
+    import { onAuthStateChanged, signOut } from 'firebase/auth';
+    import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+
+    let allProducts = [];
+    let currentUser = null;
+    let typedQtnQuantities = {}; // productId -> quantity integer
+
+    // Load active session
+    function initSession() {
+      const stored = localStorage.getItem('currentUser');
+      if (!stored) {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      
+      currentUser = JSON.parse(stored);
+      if (currentUser.role !== 'customer') {
+        localStorage.removeItem('currentUser');
+        window.location.href = '/pages/login.html';
+        return;
+      }
+
+      // Populate layout
+      document.getElementById('user_name').innerText = currentUser.name || 'B2B Client';
+      document.getElementById('user_institution').innerText = currentUser.institutionName || 'Ganga Maxx Partner';
+      document.getElementById('user_avatar').innerText = (currentUser.name || 'CU').substring(0, 2).toUpperCase();
+
+      // Load products & past quotes
+      fetchActiveProducts();
+      fetchQuotationsArchive();
+    }
+
+    // Fetch products
+    async function fetchActiveProducts() {
+      try {
+        const productsRef = collection(db, 'products');
+        const q = query(productsRef, where('isActive', '==', true));
+        const snapshot = await getDocs(q);
+
+        allProducts = [];
+        snapshot.forEach(doc => {
+          allProducts.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderQuotationTable();
+      } catch (err) {
+        console.error("Error loading products:", err);
+        document.getElementById('quotation_table_body').innerHTML = `
+          <tr>
+            <td colspan="4" class="p-8 text-center text-rose-500 font-bold">
+              Failed to load catalog table: ${err.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Render Table inputs
+    function renderQuotationTable() {
+      const body = document.getElementById('quotation_table_body');
+      if (allProducts.length === 0) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="4" class="p-8 text-center text-brand-text-muted">
+              No active products available to bid on right now.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      body.innerHTML = allProducts.map(p => {
+        return `
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="p-4">
+              <p class="font-bold text-brand-dark text-xs">${p.name}</p>
+              <p class="text-[10px] text-brand-text-muted mt-0.5">${p.category} • Unit: ${p.unit}</p>
+            </td>
+            <td class="p-4 font-mono font-medium text-slate-500 text-[11px]">${p.sku}</td>
+            <td class="p-4 text-right font-semibold">₹${Number(p.pricePerUnit).toLocaleString()}</td>
+            <td class="p-4 text-center">
+              <input type="number" placeholder="0" min="0" oninput="updateQtnQty('${p.id}', this.value)" class="w-20 p-1.5 border border-brand-border rounded text-center font-bold text-xs focus:ring-1 focus:ring-brand-green outline-none">
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.updateQtnQty = function(productId, val) {
+      const parsed = parseInt(val, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        delete typedQtnQuantities[productId];
+      } else {
+        typedQtnQuantities[productId] = parsed;
+      }
+    };
+
+    // Fetch past Quotations
+    async function fetchQuotationsArchive() {
+      try {
+        const uid = currentUser.uid || currentUser.id;
+        const qRef = collection(db, 'quotations');
+        const q = query(qRef, where('customerId', '==', uid));
+        const snapshot = await getDocs(q);
+
+        const list = [];
+        snapshot.forEach(doc => {
+          list.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Sort descending
+        list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        renderArchiveList(list);
+      } catch (err) {
+        console.error("Error loading quotes archive:", err);
+        document.getElementById('quotations_archive_list').innerHTML = `
+          <div class="py-4 text-center text-xs text-rose-500">
+            Failed to load past quotation bids.
+          </div>
+        `;
+      }
+    }
+
+    function renderArchiveList(list) {
+      const container = document.getElementById('quotations_archive_list');
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="py-6 text-center text-xs text-brand-text-muted">
+            No past quotation requests found. Submit a proposal to begin.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map(q => {
+        let statusColor = 'bg-amber-100 text-amber-800';
+        if (q.status === 'accepted') statusColor = 'bg-emerald-100 text-emerald-800';
+        if (q.status === 'rejected') statusColor = 'bg-rose-100 text-rose-800';
+
+        const qtnId = q.quotationId || q.id;
+        const dateStr = q.createdAt ? new Date(q.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A';
+        const itemCount = q.items ? q.items.length : 0;
+
+        return `
+          <div class="py-3 space-y-1 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-brand-dark">${qtnId}</span>
+              <span class="px-2 py-0.5 rounded text-[9px] font-bold ${statusColor} uppercase">${q.status || 'sent'}</span>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-brand-text-muted">
+              <span>Submitted: ${dateStr} • ${itemCount} items</span>
+              <span class="font-semibold text-brand-dark">Est: ₹${Number(q.total || q.subtotal || 0).toLocaleString()}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Submit quotation request
+    window.submitQuotationRequest = async function() {
+      const keys = Object.keys(typedQtnQuantities);
+      if (keys.length === 0) {
+        if (window.toast) window.toast.show("Please specify a target quantity for at least one catalog item.", "info"); else alert("Please specify a target quantity for at least one catalog item.");
+        return;
+      }
+
+      const notesVal = document.getElementById('qtn_notes').value.trim();
+      const submitBtn = document.getElementById('submit_qtn_btn');
+      
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Submitting bid...";
+
+      try {
+        const qtnItems = keys.map(pid => ({
+          productId: pid,
+          qty: typedQtnQuantities[pid]
+        }));
+
+        const token = auth.currentUser ? await auth.currentUser.getIdToken() : (currentUser.uid || currentUser.id);
+
+        const response = await fetch('/customer/quotation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            items: qtnItems,
+            notes: notesVal
+          })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to submit quotation bid');
+        }
+
+        if (window.toast) window.toast.show(`Quotation proposal ${result.quotationId} registered with the compliance department!`, "info"); else alert(`Quotation proposal ${result.quotationId} registered with the compliance department!`);
+        
+        // Clean up fields & reload lists
+        document.getElementById('qtn_notes').value = '';
+        typedQtnQuantities = {};
+        
+        // Reload table views & history archives
+        fetchActiveProducts();
+        fetchQuotationsArchive();
+
+      } catch (err) {
+        console.error("Quotation submission error:", err);
+        alert("Error submitting bid: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Submit Proposal Bid for Review";
+      }
+    };
+
+    // Logout
+    window.handleLogout = async function() {
+      try {
+        await signOut(auth);
+      } catch (e) {}
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('subRole');
+      window.location.href = '/pages/login.html';
+    };
+
+    initSession();
+    lucide.createIcons();
+  </script>
+
+<script src="/components/chat-widget.js"></script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module">
+    import { initNotifications } from "/js/notifications.js";
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser && currentUser.uid) initNotifications(currentUser.uid);
+  </script>
+</body>
+</html>

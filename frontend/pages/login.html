@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ganga Maxx B2B Bulk Order Portal - Login</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/css/global.css">
+  
+  <!-- Importmap for standard Firebase resolve in browser -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+
+  <script>
+    // Configure Tailwind to support brand colors directly as classes
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark flex flex-col min-h-screen justify-between py-8 px-4 font-sans">
+
+  <!-- Main Container -->
+  <main id="login_card_container" class="max-w-md w-full mx-auto my-auto flex flex-col gap-6">
+    
+    <!-- Logo & Header -->
+    <header class="text-center flex flex-col items-center gap-3">
+      <!-- Shopping Bag Icon SVG -->
+      <div class="h-12 w-12 rounded-full bg-brand-green/10 flex items-center justify-center text-brand-green">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+        </svg>
+      </div>
+      <div>
+        <span class="text-brand-green text-xs font-bold tracking-widest uppercase block">GANGA MAXX MARKETPLACE</span>
+        <h1 class="text-2xl font-bold tracking-tight text-brand-dark mt-1">B2B Bulk Order Portal</h1>
+        <p class="text-brand-text-muted text-sm mt-1.5 max-w-sm mx-auto">
+          Login to manage quotations, tracking, and commercial orders
+        </p>
+      </div>
+    </header>
+
+    <!-- Credentials Status Box / Alert -->
+    <div id="login_status_alert" class="hidden rounded-md p-4 flex gap-3 text-sm" role="alert">
+      <div class="flex-shrink-0">
+        <!-- Error icon -->
+        <svg id="alert_icon_error" class="h-5 w-5 text-brand-error hidden" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+        </svg>
+        <!-- Success icon -->
+        <svg id="alert_icon_success" class="h-5 w-5 text-brand-success hidden" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div id="alert_text" class="font-medium"></div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="card p-6 md:p-8 bg-white shadow-xl rounded-xl border border-brand-border">
+      
+      <!-- Role Toggle Switcher -->
+      <div class="mb-6">
+        <label class="form-label text-center mb-3">Select Portal Access Role</label>
+        <div class="flex p-1 bg-brand-light-bg rounded-lg border border-brand-border" id="role_selector_group">
+          <button type="button" onclick="selectRole('customer')" id="role_btn_customer" class="flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-brand-dark bg-white shadow-sm">
+            Customer
+          </button>
+          <button type="button" onclick="selectRole('staff')" id="role_btn_staff" class="flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-brand-text-muted hover:text-brand-dark">
+            Staff Member
+          </button>
+          <button type="button" onclick="selectRole('admin')" id="role_btn_admin" class="flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-brand-text-muted hover:text-brand-dark">
+            Admin
+          </button>
+        </div>
+      </div>
+
+      <!-- LoginForm -->
+      <form id="login_form" class="space-y-5" onsubmit="handleFormSubmit(event)">
+        <!-- Email Input -->
+        <div>
+          <label for="email_input" class="form-label">Corporate Email Address</label>
+          <input type="email" id="email_input" class="form-input" placeholder="procurement@greenwood.edu" required autocomplete="email">
+        </div>
+
+        <!-- Password Input -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label for="password_input" class="form-label mb-0">Account Password</label>
+            <button type="button" onclick="openForgotPasswordModal()" class="text-xs font-semibold text-brand-green hover:text-brand-hover transition-colors">
+              Forgot Password?
+            </button>
+          </div>
+          <input type="password" id="password_input" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submit_btn" class="btn-primary w-full py-3 bg-brand-dark hover:bg-black font-semibold text-white transition-all flex items-center justify-center gap-2">
+          <span>Enter B2B Portal</span>
+          <!-- Loading Spinner -->
+          <svg id="loading_spinner" class="hidden animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center">
+            <span class="w-full border-t border-brand-border"></span>
+          </div>
+          <div class="relative flex justify-center text-xs uppercase">
+            <span class="bg-white px-2 text-brand-text-muted">Or continue with</span>
+          </div>
+        </div>
+
+        <!-- Google Login Button -->
+        <button type="button" onclick="handleGoogleLogin()" class="w-full py-2.5 px-4 border border-brand-border rounded-lg bg-white hover:bg-gray-50 font-medium text-brand-dark flex items-center justify-center gap-3 transition-all">
+          <svg class="h-5 w-5" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          <span>Sign in with Google</span>
+        </button>
+      </form>
+
+      <!-- Bottom Register Link -->
+      <div class="mt-6 text-center text-sm">
+        <span class="text-brand-text-muted">Don't have an account?</span>
+        <a href="/pages/register.html" class="font-semibold text-brand-green hover:text-brand-hover transition-colors ml-1">Register account</a>
+      </div>
+    </div>
+
+    <!-- Seed Demo Accounts Box -->
+    <div class="rounded-xl border border-brand-green/30 bg-brand-green/5 p-5" id="seed_accounts_box">
+      <div class="flex items-center gap-2 mb-3 text-brand-green">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 01-7.5 0M4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
+        <span class="text-sm font-bold uppercase tracking-wider">Demo Sandbox Accounts</span>
+      </div>
+      
+      <!-- Customer Seed Options -->
+      <div id="seed_details_customer" class="seed-list text-xs space-y-2.5">
+        <p class="text-brand-text-muted mb-1.5 font-medium">Use these credentials for immediate testing:</p>
+        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('procurement@apollohospitals.com', 'password123')">
+          <div class="font-semibold text-brand-dark flex justify-between">
+            <span>Apollo Hospitals (Customer)</span>
+            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
+          </div>
+          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: procurement@apollohospitals.com</div>
+          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123</div>
+        </div>
+        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('suresh@medplusindia.com', 'password123')">
+          <div class="font-semibold text-brand-dark flex justify-between">
+            <span>MedPlus Pharmacy (Customer)</span>
+            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
+          </div>
+          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: suresh@medplusindia.com</div>
+          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123</div>
+        </div>
+      </div>
+
+      <!-- Staff Seed Options -->
+      <div id="seed_details_staff" class="seed-list hidden text-xs space-y-2.5">
+        <p class="text-brand-text-muted mb-1.5 font-medium">Use these credentials for immediate testing:</p>
+        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('vikram.sales@gangamaxx.com', 'password123')">
+          <div class="font-semibold text-brand-dark flex justify-between">
+            <span>Vikram Singh (Salesman Staff)</span>
+            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
+          </div>
+          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: vikram.sales@gangamaxx.com</div>
+          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123</div>
+        </div>
+        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('anil.wh@gangamaxx.com', 'password123')">
+          <div class="font-semibold text-brand-dark flex justify-between">
+            <span>Anil Kumar (Warehouse Staff)</span>
+            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
+          </div>
+          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: anil.wh@gangamaxx.com</div>
+          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123</div>
+        </div>
+      </div>
+
+      <!-- Admin Seed Options -->
+      <div id="seed_details_admin" class="seed-list hidden text-xs space-y-2.5">
+        <p class="text-brand-text-muted mb-1.5 font-medium">Admin credentials:</p>
+        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('admin@gangamaxx.com', 'password123')">
+          <div class="font-semibold text-brand-dark flex justify-between">
+            <span>Ganga Maxx Super Admin</span>
+            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
+          </div>
+          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: admin@gangamaxx.com</div>
+          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123 (or custom)</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Forgot Password Flow Modal -->
+  <div id="forgot_password_modal" class="modal-overlay">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 md:p-8 border border-brand-border mx-4 relative">
+      <!-- Close Button -->
+      <button onclick="closeForgotPasswordModal()" class="absolute top-4 right-4 text-brand-text-muted hover:text-brand-dark transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Stage 1: Request Email -->
+      <div id="forgot_stage_email" class="space-y-4">
+        <div class="text-center">
+          <h3 class="text-xl font-bold text-brand-dark">Reset Password</h3>
+          <p class="text-brand-text-muted text-sm mt-1">Enter your registered email address to receive an OTP.</p>
+        </div>
+        <div id="stage_email_alert" class="hidden p-3 text-xs bg-brand-error/10 text-brand-error rounded font-medium"></div>
+        <form onsubmit="handleRequestReset(event)" class="space-y-4">
+          <div>
+            <label for="reset_email_input" class="form-label">Corporate Email Address</label>
+            <input type="email" id="reset_email_input" class="form-input" placeholder="procurement@apollohospitals.com" required>
+          </div>
+          <button type="submit" id="reset_email_btn" class="btn-secondary w-full py-2.5 flex items-center justify-center gap-2">
+            <span>Request Reset OTP</span>
+            <svg id="reset_email_spinner" class="hidden animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- Stage 2: OTP Verification -->
+      <div id="forgot_stage_otp" class="hidden space-y-4">
+        <div class="text-center">
+          <h3 class="text-xl font-bold text-brand-dark">Verify OTP</h3>
+          <p class="text-brand-text-muted text-sm mt-1" id="otp_destination_message">
+            A reset link has been sent to your WhatsApp number ending in <span id="whatsapp_digits_span" class="font-bold">XXXX</span>.
+          </p>
+        </div>
+        <div id="stage_otp_alert" class="hidden p-3 text-xs bg-brand-error/10 text-brand-error rounded font-medium"></div>
+        
+        <!-- 6 OTP Boxes -->
+        <div class="flex justify-between gap-2 max-w-xs mx-auto py-2">
+          <input type="text" maxlength="1" oninput="handleOtpInput(this, 1)" onkeydown="handleOtpBackspace(event, 1)" id="otp_box_1" class="w-12 h-12 text-center text-lg font-bold border border-brand-border rounded focus:outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20">
+          <input type="text" maxlength="1" oninput="handleOtpInput(this, 2)" onkeydown="handleOtpBackspace(event, 2)" id="otp_box_2" class="w-12 h-12 text-center text-lg font-bold border border-brand-border rounded focus:outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20">
+          <input type="text" maxlength="1" oninput="handleOtpInput(this, 3)" onkeydown="handleOtpBackspace(event, 3)" id="otp_box_3" class="w-12 h-12 text-center text-lg font-bold border border-brand-border rounded focus:outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20">
+          <input type="text" maxlength="1" oninput="handleOtpInput(this, 4)" onkeydown="handleOtpBackspace(event, 4)" id="otp_box_4" class="w-12 h-12 text-center text-lg font-bold border border-brand-border rounded focus:outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20">
+          <input type="text" maxlength="1" oninput="handleOtpInput(this, 5)" onkeydown="handleOtpBackspace(event, 5)" id="otp_box_5" class="w-12 h-12 text-center text-lg font-bold border border-brand-border rounded focus:outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20">
+          <input type="text" maxlength="1" oninput="handleOtpInput(this, 6)" onkeydown="handleOtpBackspace(event, 6)" id="otp_box_6" class="w-12 h-12 text-center text-lg font-bold border border-brand-border rounded focus:outline-none focus:border-brand-green focus:ring-2 focus:ring-brand-green/20">
+        </div>
+
+        <button onclick="handleVerifyOtp()" class="btn-primary w-full py-2.5 bg-brand-dark hover:bg-black font-semibold text-white transition-all">
+          Verify Security Code
+        </button>
+        <p class="text-center text-xs text-brand-text-muted mt-2">
+          Didn't receive WhatsApp OTP? 
+          <button type="button" onclick="resendOtp()" class="text-brand-green font-semibold hover:underline">Resend OTP</button>
+        </p>
+      </div>
+
+      <!-- Stage 3: New Password Screen -->
+      <div id="forgot_stage_password" class="hidden space-y-4">
+        <div class="text-center">
+          <h3 class="text-xl font-bold text-brand-dark">Create New Password</h3>
+          <p class="text-brand-text-muted text-sm mt-1">Please enter your new B2B security credentials.</p>
+        </div>
+        <div id="stage_password_alert" class="hidden p-3 text-xs bg-brand-error/10 text-brand-error rounded font-medium"></div>
+        <form onsubmit="handleSaveNewPassword(event)" class="space-y-4">
+          <div>
+            <label for="new_password" class="form-label">New Password</label>
+            <input type="password" id="new_password" class="form-input" placeholder="Min. 6 characters" required minlength="6">
+          </div>
+          <div>
+            <label for="confirm_password" class="form-label">Confirm New Password</label>
+            <input type="password" id="confirm_password" class="form-input" placeholder="Repeat new password" required>
+          </div>
+          <button type="submit" class="btn-secondary w-full py-2.5">
+            Save and Update Password
+          </button>
+        </form>
+      </div>
+
+      <!-- Stage 4: Reset Success -->
+      <div id="forgot_stage_success" class="hidden space-y-4 text-center">
+        <div class="h-12 w-12 rounded-full bg-brand-green/10 flex items-center justify-center text-brand-green mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-brand-dark">Password Updated!</h3>
+          <p class="text-brand-text-muted text-sm mt-1">
+            Your Ganga Maxx credentials have been securely updated. You can now log in with your new password.
+          </p>
+        </div>
+        <button onclick="closeForgotPasswordModal()" class="btn-primary w-full py-2.5 bg-brand-dark hover:bg-black font-semibold">
+          Return to Login
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-brand-text-muted">
+    &copy; 2026 Ganga Maxx Marketplace. Commercial Wholesaler & Distribution Systems.
+  </footer>
+
+  <!-- Link auth script -->
+  <script type="module" src="/js/auth.js"></script>
+
+  <!-- Login Page Interactions Script -->
+  <script type="module">
+    let selectedRole = 'customer';
+
+    // Global selector setup
+    window.selectRole = function(role) {
+      selectedRole = role;
+      
+      // Update button visual states
+      const roles = ['customer', 'staff', 'admin'];
+      roles.forEach(r => {
+        const btn = document.getElementById(`role_btn_${r}`);
+        if (r === role) {
+          btn.className = "flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-brand-dark bg-white shadow-sm";
+        } else {
+          btn.className = "flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 text-brand-text-muted hover:text-brand-dark";
+        }
+      });
+
+      // Update email placeholder depending on role
+      const emailInput = document.getElementById('email_input');
+      if (role === 'customer') {
+        emailInput.placeholder = "procurement@apollohospitals.com";
+      } else if (role === 'staff') {
+        emailInput.placeholder = "vikram.sales@gangamaxx.com";
+      } else {
+        emailInput.placeholder = "admin@gangamaxx.com";
+      }
+
+      // Toggle visible Seed Accounts lists
+      const seedLists = ['customer', 'staff', 'admin'];
+      seedLists.forEach(l => {
+        const list = document.getElementById(`seed_details_${l}`);
+        if (l === role) {
+          list.classList.remove('hidden');
+        } else {
+          list.classList.add('hidden');
+        }
+      });
+    }
+
+    // Autofill demo user
+    window.fillSeed = function(email, password) {
+      document.getElementById('email_input').value = email;
+      document.getElementById('password_input').value = password;
+      
+      // Clear alerts
+      const alertBox = document.getElementById('login_status_alert');
+      alertBox.classList.add('hidden');
+    }
+
+    // Submit form handler
+    window.handleFormSubmit = async function(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('email_input').value;
+      const password = document.getElementById('password_input').value;
+      
+      // Loading visual states
+      const submitBtn = document.getElementById('submit_btn');
+      const spinner = document.getElementById('loading_spinner');
+      const alertBox = document.getElementById('login_status_alert');
+      const alertText = document.getElementById('alert_text');
+      const iconError = document.getElementById('alert_icon_error');
+      const iconSuccess = document.getElementById('alert_icon_success');
+
+      submitBtn.disabled = true;
+      spinner.classList.remove('hidden');
+      alertBox.classList.add('hidden');
+      iconError.classList.add('hidden');
+      iconSuccess.classList.add('hidden');
+
+      // Trigger standard auth loginUser
+      const result = await window.authApp.loginUser(email, password, selectedRole);
+
+      // Re-enable and stop spinner
+      submitBtn.disabled = false;
+      spinner.classList.add('hidden');
+
+      if (result.success) {
+        // Show success alert before redirect
+        alertBox.className = "rounded-md p-4 flex gap-3 text-sm bg-brand-green/10 text-brand-green border border-brand-green/20";
+        alertText.innerText = "Access granted! Redirecting to dashboard...";
+        iconSuccess.classList.remove('hidden');
+        alertBox.classList.remove('hidden');
+      } else {
+        // Show error alert
+        alertBox.className = "rounded-md p-4 flex gap-3 text-sm bg-brand-error/10 text-brand-error border border-brand-error/20";
+        alertText.innerText = result.error;
+        iconError.classList.remove('hidden');
+        alertBox.classList.remove('hidden');
+      }
+    }
+
+    window.handleGoogleLogin = async function() {
+      const alertBox = document.getElementById('login_status_alert');
+      const alertText = document.getElementById('alert_text');
+      const iconError = document.getElementById('alert_icon_error');
+      const iconSuccess = document.getElementById('alert_icon_success');
+
+      alertBox.classList.add('hidden');
+      iconError.classList.add('hidden');
+      iconSuccess.classList.add('hidden');
+
+      const result = await window.authApp.loginWithGoogle(selectedRole);
+
+      if (result.success) {
+        alertBox.className = "rounded-md p-4 flex gap-3 text-sm bg-brand-green/10 text-brand-green border border-brand-green/20";
+        alertText.innerText = "Access granted! Redirecting to dashboard...";
+        iconSuccess.classList.remove('hidden');
+        alertBox.classList.remove('hidden');
+      } else {
+        alertBox.className = "rounded-md p-4 flex gap-3 text-sm bg-brand-error/10 text-brand-error border border-brand-error/20";
+        alertText.innerText = result.error;
+        iconError.classList.remove('hidden');
+        alertBox.classList.remove('hidden');
+      }
+    }
+
+    // FORGOT PASSWORD FLOW CODE
+
+    // Open/Close modal
+    window.openForgotPasswordModal = function() {
+      // Pre-fill reset email from main login email if they already typed it
+      const currentEmail = document.getElementById('email_input').value;
+      if (currentEmail) {
+        document.getElementById('reset_email_input').value = currentEmail;
+      }
+      
+      // Reset stages to Stage 1
+      resetForgotStages();
+      document.getElementById('forgot_password_modal').classList.add('active');
+    }
+
+    window.closeForgotPasswordModal = function() {
+      document.getElementById('forgot_password_modal').classList.remove('active');
+    }
+
+    function resetForgotStages() {
+      document.getElementById('forgot_stage_email').classList.remove('hidden');
+      document.getElementById('forgot_stage_otp').classList.add('hidden');
+      document.getElementById('forgot_stage_password').classList.add('hidden');
+      document.getElementById('forgot_stage_success').classList.add('hidden');
+      
+      document.getElementById('stage_email_alert').classList.add('hidden');
+      document.getElementById('stage_otp_alert').classList.add('hidden');
+      document.getElementById('stage_password_alert').classList.add('hidden');
+      
+      // Clear inputs
+      document.getElementById('reset_email_input').value = '';
+      for (let i = 1; i <= 6; i++) {
+        document.getElementById(`otp_box_${i}`).value = '';
+      }
+      document.getElementById('new_password').value = '';
+      document.getElementById('confirm_password').value = '';
+    }
+
+    // OTP Navigation and limits
+    window.handleOtpInput = function(elem, index) {
+      // Remove any non-digits
+      elem.value = elem.value.replace(/[^0-9]/g, '');
+      
+      if (elem.value.length === 1 && index < 6) {
+        document.getElementById(`otp_box_${index + 1}`).focus();
+      }
+    }
+
+    window.handleOtpBackspace = function(event, index) {
+      if (event.key === "Backspace" && !event.target.value && index > 1) {
+        document.getElementById(`otp_box_${index - 1}`).focus();
+      }
+    }
+
+    // Submit reset password request
+    window.handleRequestReset = async function(event) {
+      event.preventDefault();
+      const email = document.getElementById('reset_email_input').value;
+      const spinner = document.getElementById('reset_email_spinner');
+      const alertBox = document.getElementById('stage_email_alert');
+      
+      spinner.classList.remove('hidden');
+      alertBox.classList.add('hidden');
+
+      const result = await window.authApp.requestPasswordReset(email);
+      spinner.classList.add('hidden');
+
+      if (result.success) {
+        document.getElementById('whatsapp_digits_span').innerText = result.lastFour;
+        // Go to Stage 2: OTP
+        document.getElementById('forgot_stage_email').classList.add('hidden');
+        document.getElementById('forgot_stage_otp').classList.remove('hidden');
+      } else {
+        alertBox.innerText = result.error;
+        alertBox.classList.remove('hidden');
+      }
+    }
+
+    // Resend OTP
+    window.resendOtp = async function() {
+      const activeSession = sessionStorage.getItem('reset_otp_data');
+      if (activeSession) {
+        const data = JSON.parse(activeSession);
+        const alertBox = document.getElementById('stage_otp_alert');
+        alertBox.classList.add('hidden');
+        
+        const result = await window.authApp.requestPasswordReset(data.email);
+        if (result.success) {
+          if (window.toast) window.toast.show("A new OTP code has been sent to your WhatsApp number!", "info"); else alert("A new OTP code has been sent to your WhatsApp number!");
+        } else {
+          alertBox.innerText = result.error;
+          alertBox.classList.remove('hidden');
+        }
+      }
+    }
+
+    // Verify OTP Submission
+    window.handleVerifyOtp = function() {
+      let enteredOtp = '';
+      for (let i = 1; i <= 6; i++) {
+        enteredOtp += document.getElementById(`otp_box_${i}`).value;
+      }
+
+      const alertBox = document.getElementById('stage_otp_alert');
+      alertBox.classList.add('hidden');
+
+      if (enteredOtp.length < 6) {
+        alertBox.innerText = "Please enter all 6 digits of the OTP code.";
+        alertBox.classList.remove('hidden');
+        return;
+      }
+
+      const result = window.authApp.verifyResetOtp(enteredOtp);
+      if (result.success) {
+        // Go to Stage 3: New Password
+        document.getElementById('forgot_stage_otp').classList.add('hidden');
+        document.getElementById('forgot_stage_password').classList.remove('hidden');
+      } else {
+        alertBox.innerText = result.error;
+        alertBox.classList.remove('hidden');
+      }
+    }
+
+    // Save Password
+    window.handleSaveNewPassword = async function(event) {
+      event.preventDefault();
+      
+      const newPassword = document.getElementById('new_password').value;
+      const confirmPassword = document.getElementById('confirm_password').value;
+      const alertBox = document.getElementById('stage_password_alert');
+      alertBox.classList.add('hidden');
+
+      if (newPassword.length < 6) {
+        alertBox.innerText = "The password must be at least 6 characters long.";
+        alertBox.classList.remove('hidden');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        alertBox.innerText = "Passwords do not match. Please try again.";
+        alertBox.classList.remove('hidden');
+        return;
+      }
+
+      const result = await window.authApp.updateAccountPassword(newPassword);
+      if (result.success) {
+        // Go to Stage 4: Success
+        document.getElementById('forgot_stage_password').classList.add('hidden');
+        document.getElementById('forgot_stage_success').classList.remove('hidden');
+      } else {
+        alertBox.innerText = result.error;
+        alertBox.classList.remove('hidden');
+      }
+    }
+  </script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "info": {
+    "name": "B2B Bulk Order Portal API Collection",
+    "description": "API collection for backend testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        { "name": "Login", "request": { "method": "POST", "url": "{{baseUrl}}/api/auth/login" } },
+        { "name": "Register", "request": { "method": "POST", "url": "{{baseUrl}}/api/auth/register" } }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        { "name": "Create Order", "request": { "method": "POST", "url": "{{baseUrl}}/api/orders" } },
+        { "name": "Get Orders", "request": { "method": "GET", "url": "{{baseUrl}}/api/orders" } }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        { "name": "Get Products", "request": { "method": "GET", "url": "{{baseUrl}}/api/products" } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Staff Registration - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="/css/global.css">
+  
+  <!-- Importmap for standard Firebase resolve in browser -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark flex flex-col min-h-screen justify-between py-8 px-4 font-sans">
+
+  <!-- Main Container -->
+  <main class="max-w-md w-full mx-auto my-auto flex flex-col gap-6">
+    
+    <!-- Logo & Header -->
+    <header class="text-center flex flex-col items-center gap-2">
+      <!-- Shield / Badge Icon SVG -->
+      <div class="h-10 w-10 rounded-full bg-brand-green/10 flex items-center justify-center text-brand-green">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+        </svg>
+      </div>
+      <div>
+        <span class="text-brand-green text-xs font-bold tracking-widest uppercase block">GANGA MAXX MARKETPLACE</span>
+        <h1 class="text-xl font-bold tracking-tight text-brand-dark mt-1">Staff Access Request</h1>
+        <p class="text-brand-text-muted text-xs mt-1">
+          Submit access requests for internal commercial operations management
+        </p>
+      </div>
+    </header>
+
+    <!-- Status Alert -->
+    <div id="status_alert" class="hidden rounded-md p-4 flex gap-3 text-sm" role="alert">
+      <div class="flex-shrink-0">
+        <!-- Error Icon -->
+        <svg id="alert_icon_error" class="h-5 w-5 text-brand-error hidden" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+        </svg>
+        <!-- Success Icon -->
+        <svg id="alert_icon_success" class="h-5 w-5 text-brand-success hidden" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div id="alert_text" class="font-medium"></div>
+    </div>
+
+    <!-- Staff Registration Card -->
+    <div class="card p-6 md:p-8 bg-white shadow-xl rounded-xl border border-brand-border">
+      
+      <form id="staff_reg_form" class="space-y-4" onsubmit="handleStaffRegistration(event)">
+        
+        <!-- Full Name -->
+        <div>
+          <label for="full_name" class="form-label">Full Name</label>
+          <input type="text" id="full_name" class="form-input" placeholder="e.g. Vikram Singh" required>
+        </div>
+
+        <!-- WhatsApp Number -->
+        <div>
+          <label for="whatsapp_number" class="form-label">WhatsApp Number</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-medium text-brand-text-muted">+91</span>
+            <input type="tel" id="whatsapp_number" class="form-input pl-12" placeholder="9999999999" required minlength="10" maxlength="10">
+          </div>
+          <span class="text-[10px] text-brand-text-muted mt-1 block">Your primary channel for alerts, OTP verification, and status updates.</span>
+        </div>
+
+        <!-- Sub Role Dropdown -->
+        <div>
+          <label for="sub_role" class="form-label">Sub Role</label>
+          <select id="sub_role" class="form-input py-2.5" required>
+            <option value="" disabled selected>Select internal sub role...</option>
+            <option value="Sales Admin">Sales Admin</option>
+            <option value="Warehouse Staff">Warehouse Staff</option>
+            <option value="Salesman">Salesman</option>
+            <option value="Delivery Coordinator">Delivery Coordinator</option>
+            <option value="Accounts Manager">Accounts Manager</option>
+            <option value="Compliance Admin">Compliance Admin</option>
+          </select>
+        </div>
+
+        <!-- Corporate Email -->
+        <div>
+          <label for="email_address" class="form-label">Corporate Email Address</label>
+          <input type="email" id="email_address" class="form-input" placeholder="vikram.sales@gangamaxx.com" required>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label for="password" class="form-label">Password</label>
+          <div class="relative">
+            <input type="password" id="password" class="form-input pr-10" placeholder="Min. 8 characters" required>
+            <button type="button" onclick="togglePasswordVisibility('password')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-brand-text-muted hover:text-brand-dark">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5" id="password_eye">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div>
+          <label for="confirm_password" class="form-label">Confirm Password</label>
+          <div class="relative">
+            <input type="password" id="confirm_password" class="form-input pr-10" placeholder="Re-type password" required>
+            <button type="button" onclick="togglePasswordVisibility('confirm_password')" class="absolute inset-y-0 right-0 flex items-center pr-3 text-brand-text-muted hover:text-brand-dark">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5" id="confirm_password_eye">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Warning / Validation note -->
+        <span class="text-[10px] text-brand-text-muted mt-1 block">Passwords must contain 8+ characters, including at least 1 number and 1 special symbol.</span>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submit_btn" class="btn-secondary w-full py-3 bg-brand-green hover:bg-brand-hover font-semibold text-white transition-all flex items-center justify-center gap-2 mt-4">
+          <span>Request Access</span>
+          <!-- Loading Spinner -->
+          <svg id="loading_spinner" class="hidden animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+
+      </form>
+
+      <!-- Back to Login Link -->
+      <div class="mt-6 text-center text-sm">
+        <a href="/pages/login.html" class="inline-flex items-center gap-2 font-semibold text-brand-green hover:text-brand-hover transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          Back to Login Portal
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="text-center text-xs text-brand-text-muted mt-8">
+    &copy; 2026 Ganga Maxx Marketplace. Commercial Wholesaler & Distribution Systems.
+  </footer>
+
+  <!-- Firebase Integration Scripts -->
+  <script type="module">
+    import { auth, db } from '/firebase/firebaseConfig.js';
+    import { CONFIG } from '/js/config.js';
+    import { createUserWithEmailAndPassword } from 'firebase/auth';
+    import { setDoc, doc } from 'firebase/firestore';
+
+    // Toggle Password eye visibility
+    window.togglePasswordVisibility = function(id) {
+      const input = document.getElementById(id);
+      if (input.type === 'password') {
+        input.type = 'text';
+      } else {
+        input.type = 'password';
+      }
+    }
+
+    // Main Submit Code
+    window.handleStaffRegistration = async function(event) {
+      event.preventDefault();
+
+      // Clear alerts
+      const alertBox = document.getElementById('status_alert');
+      const alertText = document.getElementById('alert_text');
+      const iconError = document.getElementById('alert_icon_error');
+      const iconSuccess = document.getElementById('alert_icon_success');
+      
+      alertBox.classList.add('hidden');
+      iconError.classList.add('hidden');
+      iconSuccess.classList.add('hidden');
+
+      // Form values
+      const fullName = document.getElementById('full_name').value.trim();
+      const whatsapp = document.getElementById('whatsapp_number').value.trim();
+      const subRole = document.getElementById('sub_role').value;
+      const email = document.getElementById('email_address').value.trim().toLowerCase();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm_password').value;
+
+      // Validation
+      // Phone check
+      if (!/^\d{10}$/.test(whatsapp)) {
+        showError("WhatsApp number must be exactly 10 digits.");
+        return;
+      }
+
+      // Password checks: min 8 chars, must contain number and special character
+      if (password.length < 8) {
+        showError("Password must be at least 8 characters long.");
+        return;
+      }
+      if (!/[0-9]/.test(password)) {
+        showError("Password must contain at least one number.");
+        return;
+      }
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        showError("Password must contain at least one special character.");
+        return;
+      }
+
+      // Passwords match
+      if (password !== confirmPassword) {
+        showError("Passwords do not match. Please verify.");
+        return;
+      }
+
+      // Start UI spinner
+      const submitBtn = document.getElementById('submit_btn');
+      const spinner = document.getElementById('loading_spinner');
+      submitBtn.disabled = true;
+      spinner.classList.remove('hidden');
+
+      try {
+        let uid = '';
+        
+        // Attempt standard user creation in Firebase Auth
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          uid = userCredential.user.uid;
+        } catch (authError) {
+          console.warn("Firebase Auth registration failure or disabled. Creating offline Firestore credential ID.", authError);
+          // If auth is disabled or unavailable, we generate a pseudo-uid based on email to ensure seeding works
+          uid = 'staff_' + Math.random().toString(36).substring(2, 11);
+        }
+
+        // Save account data in Firestore with role: staff and status: pending
+        const newStaffDoc = {
+          uid: uid,
+          name: fullName,
+          email: email,
+          password: password, // For offline dashboard login fallback
+          whatsappNumber: '+91' + whatsapp,
+          role: 'staff',
+          subRole: subRole,
+          status: 'pending',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+
+        await setDoc(doc(db, 'users', uid), newStaffDoc);
+
+        // Success feedback (Do NOT redirect to dashboard since it's pending approval)
+        alertBox.className = "rounded-md p-4 flex gap-3 text-sm bg-brand-green/10 text-brand-green border border-brand-green/20";
+        alertText.innerText = "Your access request has been submitted. Admin will approve your account. You will be notified on WhatsApp.";
+        iconSuccess.classList.remove('hidden');
+        alertBox.classList.remove('hidden');
+
+        // Form disable after successful submit
+        document.getElementById('staff_reg_form').reset();
+        submitBtn.disabled = true;
+
+        // Open WhatsApp notification link
+        const adminWhatsapp = CONFIG.ADMIN_WHATSAPP;
+        const msgText = encodeURIComponent(`New staff registration request from ${fullName} for role ${subRole}`);
+        const waLink = `https://wa.me/91${adminWhatsapp}?text=${msgText}`;
+        
+        // Open the WhatsApp Link
+        window.open(waLink, '_blank');
+
+      } catch (error) {
+        console.error("Registration failed:", error);
+        showError("Registration Error: " + error.message);
+        submitBtn.disabled = false;
+        spinner.classList.add('hidden');
+      }
+    };
+
+    function showError(msg) {
+      const alertBox = document.getElementById('status_alert');
+      const alertText = document.getElementById('alert_text');
+      const iconError = document.getElementById('alert_icon_error');
+
+      alertBox.className = "rounded-md p-4 flex gap-3 text-sm bg-brand-error/10 text-brand-error border border-brand-error/20";
+      alertText.innerText = msg;
+      iconError.classList.remove('hidden');
+      alertBox.classList.remove('hidden');
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+</body>
+</html>

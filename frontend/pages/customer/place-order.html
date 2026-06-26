@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk Order Entry - Ganga Maxx Marketplace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Inter & Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Importmap for Firebase -->
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+      }
+    }
+  </script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-dark': '#1a2332',
+            'brand-green': '#2d7a5f',
+            'brand-light-bg': '#f4f6f9',
+            'brand-border': '#e2e8f0',
+            'brand-text-dark': '#1a2332',
+            'brand-text-muted': '#718096',
+            'brand-success': '#2d7a5f',
+            'brand-error': '#e53e3e',
+            'brand-hover': '#245f4a',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A651' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z'/><path d='M3 6h18'/><path d='M16 10a4 4 0 0 1-8 0'/></svg>">
+  <link rel="stylesheet" href="/css/print.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-brand-light-bg text-brand-text-dark min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-brand-border sticky top-0 z-40">
+    <div class="px-4 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-brand-green flex items-center justify-center text-white">
+          <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+        </div>
+        <div>
+          <h1 class="font-bold tracking-tight text-sm uppercase text-brand-dark">Ganga Maxx</h1>
+          <p class="text-[10px] text-brand-green font-semibold tracking-wider">B2B MARKETPLACE</p>
+        </div>
+      </div>
+
+      <!-- Right Actions -->
+      <div class="flex items-center gap-4">
+        <!-- User Info -->
+        <div class="flex items-center gap-3">
+          <div class="h-9 w-9 rounded-full bg-brand-green/10 text-brand-green font-bold flex items-center justify-center border border-brand-green/20" id="user_avatar">
+            CU
+          </div>
+          <div class="hidden sm:block text-left">
+            <h4 class="text-xs font-semibold leading-none" id="user_name">B2B Partner</h4>
+            <span class="text-[10px] text-brand-text-muted font-medium" id="user_institution">Hospital</span>
+          </div>
+        </div>
+
+        <!-- Logout button -->
+        <button onclick="window.handleLogout()" class="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-md font-semibold text-rose-500 hover:bg-rose-50 transition-colors">
+          <i data-lucide="log-out" class="h-4 w-4"></i>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Frame -->
+  <div class="flex-1 flex overflow-hidden">
+    
+    <!-- Sidebar Navigation for Desktop -->
+    <aside class="hidden md:flex flex-col w-64 bg-white border-r border-brand-border py-6 px-4 gap-6 shrink-0 justify-between">
+      <div class="space-y-1">
+        <p class="text-[10px] font-bold tracking-wider text-brand-text-muted uppercase px-3 mb-2">Workspace</p>
+        
+        <a href="/pages/customer/dashboard.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="home" class="h-4 w-4"></i>
+          <span>Home Dashboard</span>
+        </a>
+        
+        <a href="/pages/customer/products.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="grid" class="h-4 w-4"></i>
+          <span>Product Catalog</span>
+        </a>
+        
+        <a href="/pages/customer/place-order.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-brand-green text-white">
+          <i data-lucide="clipboard-list" class="h-4 w-4"></i>
+          <span>Bulk Order Entry</span>
+        </a>
+        
+        <a href="/pages/customer/my-orders.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+          <span>My Orders</span>
+        </a>
+        
+        <a href="/pages/customer/quotation.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-text-muted hover:bg-brand-light-bg hover:text-brand-dark transition-colors">
+          <i data-lucide="file-text" class="h-4 w-4"></i>
+          <span>Quotations</span>
+        </a>
+        
+        <button onclick="document.getElementById('gm_chat_bubble').click()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-green hover:bg-brand-green hover:text-white transition-colors border border-brand-green/20 mt-4">
+          <i data-lucide="bot" class="h-4 w-4"></i>
+          <span>Talk to AI Assistant</span>
+        </button>
+      </div>
+
+      <!-- Quick support contact -->
+      <div class="bg-brand-green/5 rounded-lg p-4 border border-brand-green/10 text-xs">
+        <p class="font-bold text-brand-green mb-1">Ganga Maxx Support</p>
+        <p class="text-brand-text-muted mb-3">Questions on GST billing tiers or credit allocations?</p>
+        <a href="https://wa.me/919999999999" target="_blank" class="w-full flex items-center justify-center gap-2 py-1.5 px-3 bg-brand-green hover:bg-brand-hover text-white rounded font-medium transition-colors">
+          <i data-lucide="phone" class="h-3.5 w-3.5"></i>
+          WhatsApp Support
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Dynamic Content Canvas -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 md:pb-8">
+      
+      <div class="mb-6">
+        <h2 class="text-xl font-bold tracking-tight text-brand-dark">Bulk Order Grid Entry</h2>
+        <p class="text-xs text-brand-text-muted">Fill quantities directly below. Products matching past caches or reorder cards are highlighted first.</p>
+      </div>
+
+      <!-- Main Columns Grid Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Side: Quantity Entry Grid Table -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="bg-white rounded-xl border border-brand-border shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-brand-border">
+              <h3 class="font-bold text-sm text-brand-dark">Direct Order Table</h3>
+              <p class="text-[10px] text-brand-text-muted mt-0.5">Adjust items and notes to compile B2B bulk requisitions.</p>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-brand-border text-brand-text-muted uppercase text-[10px] font-bold">
+                    <th class="p-4">Product Name</th>
+                    <th class="p-4">SKU</th>
+                    <th class="p-4 text-right">Price/Unit</th>
+                    <th class="p-4 text-center">Min Qty</th>
+                    <th class="p-4 text-center">Your Qty</th>
+                    <th class="p-4 text-right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody id="bulk_order_table_body" class="divide-y divide-brand-border">
+                  <!-- Dynamic product rows injected here -->
+                  <tr>
+                    <td colspan="6" class="p-8 text-center text-brand-text-muted">
+                      Loading products database...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Notes, delivery details form -->
+          <div class="bg-white rounded-xl border border-brand-border p-5 shadow-sm space-y-4">
+            <h4 class="text-xs font-bold uppercase text-brand-text-muted tracking-wider">Logistics & Delivery Configuration</h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] font-bold text-brand-text-muted uppercase">Requested Delivery Date</label>
+                <input type="date" id="order_delivery_date" class="w-full mt-1 p-2.5 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none">
+              </div>
+              
+              <div>
+                <label class="block text-[10px] font-bold text-brand-text-muted uppercase">Delivery Details / Pincode</label>
+                <input type="text" id="order_pincode" placeholder="Pincode e.g., 201301" class="w-full mt-1 p-2.5 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-brand-text-muted uppercase">Street Address (Editable)</label>
+              <textarea id="order_street_address" rows="2" class="w-full mt-1 p-2.5 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none" placeholder="Enter complete warehouse or hospital dispatch address"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-brand-text-muted uppercase">Procurement Notes / Special Instructions</label>
+              <textarea id="order_notes" rows="3" class="w-full mt-1 p-2.5 border border-brand-border rounded text-xs focus:ring-1 focus:ring-brand-green outline-none" placeholder="e.g. Deliver to block-C reception desk basement, priority hospital shipment."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Sticky Checkout Summary Card -->
+        <div class="space-y-6">
+          <div class="bg-white rounded-xl border border-brand-border p-6 shadow-sm sticky top-24 space-y-4">
+            <h3 class="font-bold text-sm text-brand-dark border-b border-brand-border pb-3">Procurement Invoice Summary</h3>
+            
+            <!-- Itemized subtotals lists -->
+            <div class="space-y-2 text-xs" id="itemized_bill_list">
+              <div class="py-2 text-center text-brand-text-muted">
+                No products selected. Type quantities in the grid to view breakdown.
+              </div>
+            </div>
+
+            <!-- Tax breakdown calculations -->
+            <div class="border-t border-dashed border-brand-border pt-3 space-y-2 text-xs">
+              <div class="flex items-center justify-between text-brand-text-muted">
+                <span>Items Subtotal:</span>
+                <span id="summary_subtotal">₹0</span>
+              </div>
+              <div class="flex items-center justify-between text-brand-text-muted">
+                <span>GST (18% Standard):</span>
+                <span id="summary_gst">₹0</span>
+              </div>
+              <div class="flex items-center justify-between font-bold text-sm text-brand-dark pt-2 border-t border-brand-border">
+                <span>Grand Total:</span>
+                <span id="summary_grand_total">₹0</span>
+              </div>
+            </div>
+
+            <!-- Warning block for limits -->
+            <div id="min_qty_warning_alert" class="hidden p-3 rounded-lg bg-rose-50 border border-rose-100 text-[10px] text-rose-600 font-semibold space-y-1">
+              <p class="font-bold">⚠️ Quantity Error</p>
+              <p>One or more of your typed quantities is below the required B2B minimum tier limit.</p>
+            </div>
+
+            <button onclick="preSubmitValidate()" class="w-full py-3 bg-brand-green hover:bg-brand-hover text-white rounded-lg font-bold text-xs transition-all shadow flex items-center justify-center gap-2">
+              <i data-lucide="shield-check" class="h-4 w-4"></i>
+              Submit Bulk Requisition
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Mobile Bottom Tab Navigation -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-brand-border h-16 flex items-center justify-around z-40 px-2 shadow-lg">
+    <a href="/pages/customer/dashboard.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="home" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Home</span>
+    </a>
+    <a href="/pages/customer/products.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="grid" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Products</span>
+    </a>
+    <a href="/pages/customer/place-order.html" class="flex flex-col items-center justify-center flex-1 text-brand-green">
+      <i data-lucide="clipboard-list" class="h-5 w-5"></i>
+      <span class="text-[9px] font-semibold mt-1">New Order</span>
+    </a>
+    <a href="/pages/customer/my-orders.html" class="flex flex-col items-center justify-center flex-1 text-brand-text-muted hover:text-brand-dark">
+      <i data-lucide="shopping-cart" class="h-5 w-5"></i>
+      <span class="text-[9px] font-medium mt-1">Orders</span>
+    </a>
+  </nav>
+
+  <!-- Submit Confirmation Modal Overlay -->
+  <div id="confirm_modal" class="fixed inset-0 bg-brand-dark/50 z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border border-brand-border space-y-4">
+      <div class="flex items-center gap-3 text-brand-green">
+        <div class="h-10 w-10 rounded-full bg-brand-green/10 flex items-center justify-center">
+          <i data-lucide="check-circle" class="h-6 w-6"></i>
+        </div>
+        <div>
+          <h4 class="font-bold text-brand-dark">Confirm Requisition</h4>
+          <p class="text-[10px] text-brand-text-muted">Review details before sending to production.</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-4 rounded-lg text-xs space-y-2 border border-brand-border">
+        <p class="flex justify-between">
+          <span class="text-brand-text-muted">Institution:</span>
+          <span class="font-bold text-brand-dark" id="modal_inst">Hospital Name</span>
+        </p>
+        <p class="flex justify-between">
+          <span class="text-brand-text-muted">Total Bill (with GST):</span>
+          <span class="font-bold text-brand-green" id="modal_total">₹0</span>
+        </p>
+        <p class="flex justify-between">
+          <span class="text-brand-text-muted">Target Delivery Date:</span>
+          <span class="font-bold text-brand-dark" id="modal_date">None</span>
+        </p>
+        <p class="text-brand-text-muted text-[10px] leading-tight pt-2 border-t border-brand-border">
+          On confirm, your order will be pushed to the admin dashboard, and a WhatsApp redirection link will help you immediately coordinate dispatch schedules.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="toggleConfirmModal(false)" class="py-2.5 border border-brand-border hover:bg-slate-50 rounded-lg text-xs font-semibold text-brand-text-muted">
+          Cancel
+        </button>
+        <button onclick="submitOrderConfirmed()" id="submit_btn_confirm" class="py-2.5 bg-brand-green hover:bg-brand-hover text-white rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1">
+          <i data-lucide="external-link" class="h-4 w-4"></i>
+          Confirm & Submit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Scripts & Controller -->
+  <script type="module">
+    import { auth, db } from '/firebase/firebaseConfig.js';
+    import { onAuthStateChanged, signOut } from 'firebase/auth';
+    import { collection, query, where, getDocs } from 'firebase/firestore';
+
+    let allProducts = [];
+    let currentUser = null;
+    let typedQuantities = {}; // productId -> quantity integer
+
+    // Load active session
+    function initSession() {
+      const stored = localStorage.getItem('currentUser');
+      if (!stored) {
+        window.location.href = '/pages/login.html';
+        return;
+      }
+      
+      currentUser = JSON.parse(stored);
+      if (currentUser.role !== 'customer') {
+        localStorage.removeItem('currentUser');
+        window.location.href = '/pages/login.html';
+        return;
+      }
+
+      // Populate layout
+      document.getElementById('user_name').innerText = currentUser.name || 'B2B Client';
+      document.getElementById('user_institution').innerText = currentUser.institutionName || 'Ganga Maxx Partner';
+      document.getElementById('user_avatar').innerText = (currentUser.name || 'CU').substring(0, 2).toUpperCase();
+
+      // Pre-fill delivery details
+      const userAddr = currentUser.address || {};
+      document.getElementById('order_street_address').value = userAddr.street || '';
+      document.getElementById('order_pincode').value = userAddr.pincode || '';
+
+      // Load products list and align pre-populated item caches
+      fetchActiveProducts();
+    }
+
+    // Fetch active products
+    async function fetchActiveProducts() {
+      try {
+        const productsRef = collection(db, 'products');
+        const q = query(productsRef, where('isActive', '==', true));
+        const snapshot = await getDocs(q);
+
+        allProducts = [];
+        snapshot.forEach(doc => {
+          allProducts.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Pull pre-populated cart items from sessionStorage (if any)
+        const reorderItemsSaved = sessionStorage.getItem('reorder_items_cache');
+        if (reorderItemsSaved) {
+          const cachedList = JSON.parse(reorderItemsSaved);
+          cachedList.forEach(item => {
+            typedQuantities[item.productId] = Number(item.qty || item.minOrderQty);
+          });
+        }
+
+        renderTable();
+      } catch (err) {
+        console.error("Error loading products:", err);
+        document.getElementById('bulk_order_table_body').innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-rose-500 font-medium">
+              Failed to load product table: ${err.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Render Table rows
+    function renderTable() {
+      const body = document.getElementById('bulk_order_table_body');
+      if (allProducts.length === 0) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-brand-text-muted">
+              No active products are available in the system catalog right now.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      body.innerHTML = allProducts.map(p => {
+        const currentQty = typedQuantities[p.id] !== undefined ? typedQuantities[p.id] : '';
+        const rowSubtotal = currentQty ? Number(p.pricePerUnit) * Number(currentQty) : 0;
+        
+        return `
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="p-4">
+              <p class="font-bold text-brand-dark text-xs">${p.name}</p>
+              <p class="text-[9px] text-brand-text-muted mt-0.5">${p.category || 'Generics'} • Unit: ${p.unit || 'Box'}</p>
+            </td>
+            <td class="p-4 font-mono font-medium text-slate-500 text-[11px]">${p.sku}</td>
+            <td class="p-4 text-right font-semibold">₹${Number(p.pricePerUnit).toLocaleString()}</td>
+            <td class="p-4 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                ${p.minOrderQty || 1}
+              </span>
+            </td>
+            <td class="p-4 text-center">
+              <input type="number" value="${currentQty}" placeholder="0" min="0" oninput="updateRowQty('${p.id}', this.value)" class="w-16 p-1.5 border border-brand-border rounded text-center font-bold text-xs focus:ring-1 focus:ring-brand-green outline-none">
+            </td>
+            <td class="p-4 text-right font-bold text-brand-dark" id="row_sub_${p.id}">
+              ₹${rowSubtotal.toLocaleString()}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      computeTotals();
+    }
+
+    // Handle quantity changes on each row input
+    window.updateRowQty = function(productId, val) {
+      const qtyNum = parseInt(val, 10);
+      if (isNaN(qtyNum) || qtyNum <= 0) {
+        delete typedQuantities[productId];
+      } else {
+        typedQuantities[productId] = qtyNum;
+      }
+
+      // Live update row subtotal inside DOM
+      const prod = allProducts.find(p => p.id === productId);
+      if (prod) {
+        const subtotal = (typedQuantities[productId] || 0) * Number(prod.pricePerUnit);
+        document.getElementById(`row_sub_${productId}`).innerText = `₹${subtotal.toLocaleString()}`;
+      }
+
+      // Synchronize back to sessionStorage to keep user cart consistent
+      const syncCart = [];
+      for (const pid in typedQuantities) {
+        const matchingProd = allProducts.find(p => p.id === pid);
+        if (matchingProd) {
+          syncCart.push({
+            productId: pid,
+            productName: matchingProd.name,
+            sku: matchingProd.sku,
+            unit: matchingProd.unit,
+            pricePerUnit: matchingProd.pricePerUnit,
+            minOrderQty: matchingProd.minOrderQty,
+            qty: typedQuantities[pid]
+          });
+        }
+      }
+      sessionStorage.setItem('reorder_items_cache', JSON.stringify(syncCart));
+
+      computeTotals();
+    };
+
+    // Calculate dynamic order totals
+    function computeTotals() {
+      const billContainer = document.getElementById('itemized_bill_list');
+      const keys = Object.keys(typedQuantities);
+      
+      if (keys.length === 0) {
+        billContainer.innerHTML = `
+          <div class="py-2 text-center text-brand-text-muted">
+            No products selected. Type quantities in the grid to view breakdown.
+          </div>
+        `;
+        document.getElementById('summary_subtotal').innerText = '₹0';
+        document.getElementById('summary_gst').innerText = '₹0';
+        document.getElementById('summary_grand_total').innerText = '₹0';
+        document.getElementById('min_qty_warning_alert').classList.add('hidden');
+        return;
+      }
+
+      let subtotal = 0;
+      let hasMinQtyError = false;
+
+      const itemsHtml = keys.map(pid => {
+        const prod = allProducts.find(p => p.id === pid);
+        if (!prod) return '';
+
+        const qty = typedQuantities[pid];
+        const minVal = prod.minOrderQty || 1;
+        const price = prod.pricePerUnit || 0;
+        const itemSub = qty * price;
+        subtotal += itemSub;
+
+        const isBelowMin = qty < minVal;
+        if (isBelowMin) {
+          hasMinQtyError = true;
+        }
+
+        return `
+          <div class="py-2 flex items-center justify-between border-b border-brand-border">
+            <div>
+              <p class="font-bold text-brand-dark leading-snug">${prod.name}</p>
+              <p class="text-[9px] text-brand-text-muted mt-0.5">${qty} packs x ₹${price.toLocaleString()}</p>
+              ${isBelowMin ? `<p class="text-[9px] font-bold text-rose-500 leading-none mt-0.5">⚠️ Error: Below Min limit ${minVal}</p>` : ''}
+            </div>
+            <span class="font-bold text-slate-700">₹${itemSub.toLocaleString()}</span>
+          </div>
+        `;
+      }).join('');
+
+      billContainer.innerHTML = itemsHtml;
+
+      // GST 18% calculation
+      const gst = Math.round(subtotal * 0.18);
+      const grandTotal = subtotal + gst;
+
+      document.getElementById('summary_subtotal').innerText = `₹${subtotal.toLocaleString()}`;
+      document.getElementById('summary_gst').innerText = `₹${gst.toLocaleString()}`;
+      document.getElementById('summary_grand_total').innerText = `₹${grandTotal.toLocaleString()}`;
+
+      // Warning visibility
+      if (hasMinQtyError) {
+        document.getElementById('min_qty_warning_alert').classList.remove('hidden');
+      } else {
+        document.getElementById('min_qty_warning_alert').classList.add('hidden');
+      }
+    }
+
+    // Modal helpers
+    window.toggleConfirmModal = function(show) {
+      const modal = document.getElementById('confirm_modal');
+      if (show) {
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    };
+
+    // Pre-validate before opening confirm modal
+    window.preSubmitValidate = function() {
+      const keys = Object.keys(typedQuantities);
+      if (keys.length === 0) {
+        if (window.toast) window.toast.show("Please add at least one product with a valid quantity inside the table.", "info"); else alert("Please add at least one product with a valid quantity inside the table.");
+        return;
+      }
+
+      // Check min quantities
+      let hasError = false;
+      keys.forEach(pid => {
+        const prod = allProducts.find(p => p.id === pid);
+        if (prod && typedQuantities[pid] < (prod.minOrderQty || 1)) {
+          hasError = true;
+        }
+      });
+
+      if (hasError) {
+        if (window.toast) window.toast.show("Cannot submit order: Some items have quantities below the B2B wholesale minimum. Please adjust them in the table.", "info"); else alert("Cannot submit order: Some items have quantities below the B2B wholesale minimum. Please adjust them in the table.");
+        return;
+      }
+
+      const street = document.getElementById('order_street_address').value.trim();
+      const pincode = document.getElementById('order_pincode').value.trim();
+      if (!street || !pincode) {
+        if (window.toast) window.toast.show("Please specify complete delivery address and pincode to calculate freight routing.", "info"); else alert("Please specify complete delivery address and pincode to calculate freight routing.");
+        return;
+      }
+
+      // Populate modal information
+      document.getElementById('modal_inst').innerText = currentUser.institutionName || 'Hospital Partner';
+      document.getElementById('modal_total').innerText = document.getElementById('summary_grand_total').innerText;
+      
+      const dateVal = document.getElementById('order_delivery_date').value;
+      document.getElementById('modal_date').innerText = dateVal ? new Date(dateVal).toLocaleDateString() : 'As soon as possible';
+
+      toggleConfirmModal(true);
+    };
+
+    // Actual submission to backend endpoint!
+    window.submitOrderConfirmed = async function() {
+      const confirmBtn = document.getElementById('submit_btn_confirm');
+      confirmBtn.disabled = true;
+      confirmBtn.innerText = "Submitting Order...";
+
+      try {
+        const keys = Object.keys(typedQuantities);
+        const orderItems = keys.map(pid => ({
+          productId: pid,
+          qty: typedQuantities[pid]
+        }));
+
+        const street = document.getElementById('order_street_address').value.trim();
+        const pincode = document.getElementById('order_pincode').value.trim();
+        const notes = document.getElementById('order_notes').value.trim();
+        const requestedDeliveryDate = document.getElementById('order_delivery_date').value;
+
+        // Retrieve Bearer Token
+        const token = auth.currentUser ? await auth.currentUser.getIdToken() : (currentUser.uid || currentUser.id);
+
+        const response = await fetch('/customer/order', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            items: orderItems,
+            deliveryAddress: {
+              street,
+              city: currentUser.address?.city || 'Noida',
+              state: currentUser.address?.state || 'Uttar Pradesh',
+              pincode
+            },
+            notes,
+            requestedDeliveryDate
+          })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to submit order');
+        }
+
+        // Clean up sessionStorage cart
+        sessionStorage.removeItem('reorder_items_cache');
+        
+        if (window.toast) window.toast.show("Congratulations! Your Ganga Maxx bulk order has been registered.", "info"); else alert("Congratulations! Your Ganga Maxx bulk order has been registered.");
+        toggleConfirmModal(false);
+
+        // Open WhatsApp redirect for admin coordination
+        const adminPhoneNum = result.adminPhone || '9999999999';
+        const rawTotalText = document.getElementById('summary_grand_total').innerText;
+        const textMessage = encodeURIComponent(`New bulk order ${result.orderId} from ${currentUser.institutionName || 'Ganga Maxx Partner'} worth ${rawTotalText}`);
+        const waLink = `https://wa.me/91${adminPhoneNum}?text=${textMessage}`;
+
+        window.open(waLink, '_blank');
+
+        // Redirect to orders archive
+        window.location.href = '/pages/customer/my-orders.html';
+
+      } catch (err) {
+        console.error("Failed to submit bulk order:", err);
+        alert("Error submitting bulk order: " + err.message);
+      } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.innerText = "Confirm & Submit";
+      }
+    };
+
+    // Logout
+    window.handleLogout = async function() {
+      try {
+        await signOut(auth);
+      } catch (e) {}
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('subRole');
+      window.location.href = '/pages/login.html';
+    };
+
+    initSession();
+    lucide.createIcons();
+  </script>
+
+<script src="/components/chat-widget.js"></script>
+  <script src="/js/toast.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module">
+    import { initNotifications } from "/js/notifications.js";
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (currentUser && currentUser.uid) initNotifications(currentUser.uid);
+  </script>
+  <script type="module">
+    import { initAutoSave } from "/js/ui.js";
+    initAutoSave("order_form", "draft_order");
+  </script>
+</body>
+</html>
