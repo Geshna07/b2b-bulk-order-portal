@@ -1,5 +1,4 @@
-import { initializeApp as adminInitializeApp, getApps, getApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+import firebaseAdmin from 'firebase-admin';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import fs from 'fs';
@@ -15,11 +14,21 @@ const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
 const clientApp = initializeApp(config);
 const realDb = getFirestore(clientApp, config.firestoreDatabaseId);
 
-const app = getApps().length === 0 
-  ? adminInitializeApp({ projectId: config.projectId }) 
-  : getApp();
+let _auth = null;
+let _adminDb = null;
 
-const auth = getAuth(app);
+function getAuth() {
+  if (!_auth) {
+    if (!firebaseAdmin.apps.length) {
+      firebaseAdmin.initializeApp({
+        credential: firebaseAdmin.credential.applicationDefault(),
+        projectId: 'startup-glass-23kpg'
+      });
+    }
+    _auth = firebaseAdmin.auth();
+  }
+  return _auth;
+}
 
 // Wrapper for Client SDK to look like Admin SDK / v8 SDK
 class DocWrapper {
@@ -82,9 +91,21 @@ class DbWrapper {
 
 const db = new DbWrapper(realDb);
 
-const admin = {
+const auth = {
+    verifyIdToken: async (token) => {
+        return await getAuth().verifyIdToken(token);
+    },
+    getUser: async (uid) => {
+        return await getAuth().getUser(uid);
+    },
+    createUser: async (user) => {
+        return await getAuth().createUser(user);
+    }
+};
+
+const adminSdk = {
   auth: () => auth,
   firestore: () => db,
 };
 
-export { admin, db, auth };
+export { adminSdk as admin, db, auth };

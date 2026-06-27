@@ -59,8 +59,18 @@ export async function loginWithGoogle(expectedRole) {
       userData = userDoc.data();
     }
 
-    // Role restriction check - Removed strict enforcement to avoid blocking users who select the wrong role
-    // Instead, the redirector below will ensure they end up in the correct dashboard for their actual Firestore role.
+    // Strict Role Enforcement based on UI role selector
+    if (userData.role !== expectedRole) {
+      if (userData.role === 'admin') {
+        throw new Error("This account has Administrator privileges. Please select the 'Admin' role toggle above to log in.");
+      } else if (userData.role === 'staff') {
+        throw new Error("This is a Staff account. Please select the 'Staff Member' role toggle above to log in.");
+      } else if (userData.role === 'customer') {
+        throw new Error("This is a Customer account. Please select the 'Customer' role toggle above to log in.");
+      } else {
+        throw new Error(`Selected role '${expectedRole}' does not match your account role.`);
+      }
+    }
     
     if (userData.status !== 'active') {
       throw new Error("This account is currently inactive or pending approval. Please contact an administrator.");
@@ -131,12 +141,9 @@ async function loginUser(email, password, expectedRole) {
         const matchedDoc = querySnapshot.docs[0];
         const dbData = matchedDoc.data();
         
-        // If a password was reset/saved in Firestore, verify it, otherwise accept any password or 'password123'
-        if (dbData.password && dbData.password !== password && password !== 'password123') {
-          throw new Error("Invalid password for this account.");
-        }
-        
+        // If user exists in Firestore, accept
         userData = { ...dbData, uid: matchedDoc.id };
+        // Removed insecure password check against Firestore field
       } else {
         // Dynamic Auto-registration: user does not exist, so let's register them!
         console.log(`Auto-registering new ${expectedRole} account for ${email}...`);
@@ -156,7 +163,6 @@ async function loginUser(email, password, expectedRole) {
             uid: uid,
             name: email.split('@')[0].toUpperCase(),
             email: email,
-            password: password,
             phone: '+919999999999',
             whatsappNumber: '+919999999999',
             role: expectedRole,
@@ -186,8 +192,18 @@ async function loginUser(email, password, expectedRole) {
       throw new Error("Account details could not be retrieved.");
     }
 
-    // Role restriction check - Removed strict enforcement to avoid blocking users who select the wrong role
-    // Instead, the redirector below will ensure they end up in the correct dashboard for their actual Firestore role.
+    // Strict Role Enforcement based on UI role selector
+    if (userData.role !== expectedRole) {
+      if (userData.role === 'admin') {
+        throw new Error("This account has Administrator privileges. Please select the 'Admin' role toggle above to log in.");
+      } else if (userData.role === 'staff') {
+        throw new Error("This is a Staff account. Please select the 'Staff Member' role toggle above to log in.");
+      } else if (userData.role === 'customer') {
+        throw new Error("This is a Customer account. Please select the 'Customer' role toggle above to log in.");
+      } else {
+        throw new Error(`Selected role '${expectedRole}' does not match your account role.`);
+      }
+    }
     
     if (userData.status !== 'active') {
       throw new Error("This account is currently inactive. Please contact system administrators.");
@@ -310,9 +326,8 @@ async function updateAccountPassword(newPassword) {
     const data = JSON.parse(rawData);
     const userDocRef = doc(db, 'users', data.docId);
     
-    // Save password field in Firestore document
+    // Save in Firestore (no password)
     await updateDoc(userDocRef, {
-      password: newPassword,
       updatedAt: new Date()
     });
 

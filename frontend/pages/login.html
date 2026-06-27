@@ -162,70 +162,12 @@
         <a href="/pages/register.html" class="font-semibold text-brand-green hover:text-brand-hover transition-colors ml-1">Register account</a>
       </div>
     </div>
-
-    <!-- Seed Demo Accounts Box -->
-    <div class="rounded-xl border border-brand-green/30 bg-brand-green/5 p-5" id="seed_accounts_box">
-      <div class="flex items-center gap-2 mb-3 text-brand-green">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 01-7.5 0M4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-        </svg>
-        <span class="text-sm font-bold uppercase tracking-wider">Demo Sandbox Accounts</span>
-      </div>
-      
-      <!-- Customer Seed Options -->
-      <div id="seed_details_customer" class="seed-list text-xs space-y-2.5">
-        <p class="text-brand-text-muted mb-1.5 font-medium">Use these credentials for immediate testing:</p>
-        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('procurement@apollohospitals.com', 'password123')">
-          <div class="font-semibold text-brand-dark flex justify-between">
-            <span>Apollo Hospitals (Customer)</span>
-            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
-          </div>
-          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: procurement@apollohospitals.com</div>
-          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123</div>
-        </div>
-        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('suresh@medplusindia.com', 'password123')">
-          <div class="font-semibold text-brand-dark flex justify-between">
-            <span>MedPlus Pharmacy (Customer)</span>
-            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
-          </div>
-          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: suresh@medplusindia.com</div>
-          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123</div>
-        </div>
-      </div>
-
-      <!-- Staff Seed Options -->
-      <div id="seed_details_staff" class="seed-list hidden text-xs space-y-2.5">
-        <p class="text-brand-text-muted mb-1.5 font-medium">Use these credentials for immediate testing:</p>
-        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('vikram.sales@gangamaxx.com', 'password123')">
-          <div class="font-semibold text-brand-dark flex justify-between">
-            <span>Vikram Singh (Salesman Staff)</span>
-            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
-          </div>
-          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: vikram.sales@gangamaxx.com</div>
-          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123</div>
-        </div>
-        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('anil.wh@gangamaxx.com', 'password123')">
-          <div class="font-semibold text-brand-dark flex justify-between">
-            <span>Anil Kumar (Warehouse Staff)</span>
-            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
-          </div>
-          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: anil.wh@gangamaxx.com</div>
-          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123</div>
-        </div>
-      </div>
-
-      <!-- Admin Seed Options -->
-      <div id="seed_details_admin" class="seed-list hidden text-xs space-y-2.5">
-        <p class="text-brand-text-muted mb-1.5 font-medium">Admin credentials:</p>
-        <div class="p-2 bg-white rounded border border-brand-border cursor-pointer hover:bg-brand-green/5 transition-colors" onclick="fillSeed('admin@gangamaxx.com', 'password123')">
-          <div class="font-semibold text-brand-dark flex justify-between">
-            <span>Ganga Maxx Super Admin</span>
-            <span class="text-[10px] text-brand-green bg-brand-green/10 px-1 rounded">Pre-seeded</span>
-          </div>
-          <div class="text-[11px] text-brand-text-muted font-mono mt-0.5">Email: admin@gangamaxx.com</div>
-          <div class="text-[11px] text-brand-text-muted font-mono">Pass: password123 (or custom)</div>
-        </div>
-      </div>
+    
+    <!-- Footer Contact Info -->
+    <div class="text-center">
+      <p class="text-brand-text-muted text-xs">
+        Contact your administrator for access credentials
+      </p>
     </div>
   </main>
 
@@ -370,14 +312,16 @@
         emailInput.placeholder = "admin@gangamaxx.com";
       }
 
-      // Toggle visible Seed Accounts lists
+      // Toggle visible Seed Accounts lists (if they existed)
       const seedLists = ['customer', 'staff', 'admin'];
       seedLists.forEach(l => {
         const list = document.getElementById(`seed_details_${l}`);
-        if (l === role) {
-          list.classList.remove('hidden');
-        } else {
-          list.classList.add('hidden');
+        if (list) {
+          if (l === role) {
+            list.classList.remove('hidden');
+          } else {
+            list.classList.add('hidden');
+          }
         }
       });
     }

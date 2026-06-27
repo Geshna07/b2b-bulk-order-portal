@@ -3,9 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon --watch backend backend/server.js",
@@ -39,6 +36,9 @@
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "overrides": {
     "jose": "^5.9.6"

@@ -1,6 +1,5 @@
-const SYSTEM_PROMPT = "You are the AI Assistant for Ganga Maxx Marketplace B2B Bulk Order Portal. You help users understand how to use the portal. You know the following: The portal has 3 user types: Customer (institutions like schools, hotels, hospitals), Staff Members (Sales Admin, Warehouse Staff, Salesman, Delivery Coordinator, Accounts Manager, Compliance Admin), and Admin. Customers can browse the product catalog, place bulk cleaning supply orders, request quotations, track orders, and manage their credit account. Orders flow through statuses: Pending → Approved → Packed → Dispatched → Delivered. Sales Admin approves orders. Warehouse Staff packs them and manages inventory. Salesman visits customers and builds quotations. Delivery Coordinator assigns and tracks deliveries. Accounts Manager handles credit and invoices. Compliance Admin manages chemical safety documents. To register as a customer, go to the Register page and fill your institution details. Staff members need admin approval before they can login. For any order or delivery updates, WhatsApp notifications are sent automatically. If you need help with anything specific, ask me and I will guide you step by step.";
-
-let messageHistory = [];
+// ARIA full-screen chat assistant page handler
+let messageHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
 const sessionId = Math.random().toString(36).substring(2, 15);
 
 const chatMessages = document.getElementById('chat_messages');
@@ -10,23 +9,46 @@ const sendBtn = document.getElementById('send_btn');
 const typingIndicator = document.getElementById('typing_indicator');
 const suggestedQuestions = document.getElementById('suggested_questions');
 
-// Handle enter to submit
-chatInput.addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    if (chatInput.value.trim()) {
-      chatForm.dispatchEvent(new Event('submit'));
-    }
-  }
-});
+// Display recent history on load
+if (chatMessages) {
+  chatMessages.innerHTML = '';
+  messageHistory.slice(-15).forEach(msg => {
+    if (msg.role === 'user') appendUserMessage(msg.content, false);
+    else if (msg.role === 'model') appendBotMessage(msg.content, msg.suggestions || [], false);
+  });
+}
 
-chatForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const text = chatInput.value.trim();
-  if (!text) return;
-  
-  await sendMessage(text);
-});
+// Helper for typing dots
+function showTyping() {
+    if (typingIndicator) typingIndicator.classList.remove('hidden');
+    scrollToBottom();
+}
+
+function hideTyping() {
+    if (typingIndicator) typingIndicator.classList.add('hidden');
+}
+
+// Handle enter to submit
+if (chatInput) {
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (chatInput.value.trim()) {
+        chatForm.dispatchEvent(new Event('submit'));
+      }
+    }
+  });
+}
+
+if (chatForm) {
+  chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = chatInput.value.trim();
+    if (!text) return;
+    
+    await sendMessage(text);
+  });
+}
 
 window.sendSuggested = async function(text) {
   if (suggestedQuestions) {
@@ -35,7 +57,8 @@ window.sendSuggested = async function(text) {
   await sendMessage(text);
 };
 
-function appendUserMessage(text) {
+function appendUserMessage(text, save = true) {
+  if (!chatMessages) return;
   const div = document.createElement('div');
   div.className = 'flex items-end gap-2 justify-end self-end max-w-[85%] sm:max-w-2xl';
   div.innerHTML = `
@@ -43,25 +66,54 @@ function appendUserMessage(text) {
   `;
   chatMessages.appendChild(div);
   scrollToBottom();
+  if (save) {
+      messageHistory.push({ role: 'user', content: text });
+      localStorage.setItem('chatHistory', JSON.stringify(messageHistory.slice(-15)));
+  }
 }
 
-function appendBotMessage(text) {
+function appendBotMessage(text, suggestions = [], save = true) {
+  if (!chatMessages) return;
   const div = document.createElement('div');
-  div.className = 'flex items-end gap-2 max-w-[85%] sm:max-w-2xl mt-4';
+  div.className = 'flex flex-col gap-2 max-w-[85%] sm:max-w-2xl mt-4 bot-message self-start';
   
-  // Try to render markdown lists and bold text simply
-  let formattedText = escapeHtml(text);
-  formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  formattedText = formattedText.replace(/\n- (.*?)(?=\n|$)/g, '<br>• $1');
-  formattedText = formattedText.replace(/\n\d+\. (.*?)(?=\n|$)/g, '<br>• $1');
+  // Check if text is HTML (contains tables or custom layout components)
+  let htmlContent = text;
+  const isHtml = text.includes('<table') || text.includes('grid-cols') || text.includes('<ul>') || text.includes('<div');
+  
+  if (!isHtml) {
+    let formattedText = escapeHtml(text);
+    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    formattedText = formattedText.replace(/\n- (.*?)(?=\n|$)/g, '<br>• $1');
+    htmlContent = formattedText;
+  }
   
   div.innerHTML = `
-    <div class="w-8 h-8 rounded-full bg-brand-green/10 flex items-center justify-center shrink-0">
-      <i data-lucide="bot" class="w-4 h-4 text-brand-green"></i>
+    <div class="flex items-start gap-2 w-full">
+      <div class="w-8 h-8 rounded-full bg-brand-green/10 flex items-center justify-center shrink-0">
+        <i data-lucide="bot" class="w-4 h-4 text-brand-green"></i>
+      </div>
+      <div class="bg-white border border-brand-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm text-sm text-brand-text-dark leading-relaxed bot-content w-full overflow-hidden">
+        ${htmlContent}
+      </div>
     </div>
-    <div class="bg-white border border-brand-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm text-sm whitespace-pre-wrap text-brand-text-dark leading-relaxed">${formattedText}</div>
   `;
+
+  // Append suggestions if present
+  if (suggestions && suggestions.length > 0) {
+    const suggestionsDiv = document.createElement('div');
+    suggestionsDiv.className = 'flex flex-wrap gap-1.5 mt-1 ml-10';
+    suggestions.forEach(sug => {
+      const btn = document.createElement('button');
+      btn.className = 'text-[11px] font-medium bg-white border border-slate-200 hover:border-brand-green hover:text-brand-green transition-all px-2.5 py-1 rounded-full cursor-pointer shadow-sm';
+      btn.innerText = sug;
+      btn.onclick = () => window.sendSuggested(sug);
+      suggestionsDiv.appendChild(btn);
+    });
+    div.appendChild(suggestionsDiv);
+  }
+  
   chatMessages.appendChild(div);
   
   if (window.lucide) {
@@ -69,6 +121,10 @@ function appendBotMessage(text) {
   }
   
   scrollToBottom();
+  if (save) {
+      messageHistory.push({ role: 'model', content: text, suggestions });
+      localStorage.setItem('chatHistory', JSON.stringify(messageHistory.slice(-15)));
+  }
 }
 
 function escapeHtml(unsafe) {
@@ -81,64 +137,65 @@ function escapeHtml(unsafe) {
 }
 
 function scrollToBottom() {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  if (chatMessages) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
 }
 
 async function sendMessage(text) {
-  // Hide suggestions if they are still visible
   if (suggestedQuestions) {
     suggestedQuestions.style.display = 'none';
   }
 
-  // Clear input
-  chatInput.value = '';
-  chatInput.style.height = '46px';
-  chatInput.disabled = true;
-  sendBtn.disabled = true;
+  if (chatInput) {
+    chatInput.value = '';
+    chatInput.style.height = '46px';
+    chatInput.disabled = true;
+  }
+  if (sendBtn) sendBtn.disabled = true;
   
-  // Append UI
   appendUserMessage(text);
-  
-  // Show typing
-  typingIndicator.classList.remove('hidden');
-  scrollToBottom();
-  
-  // Add to history
-  messageHistory.push({ role: 'user', content: text });
+  showTyping();
   
   try {
-    const res = await fetch('/assistant/chat', {
+    // Read logged-in user session variables from local storage
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+    
+    const res = await fetch('/assistant/query', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        messages: messageHistory,
+        message: text,
+        messages: messageHistory.slice(-15),
         sessionId: sessionId,
-        systemPrompt: SYSTEM_PROMPT
+        userId: currentUser?.uid || '',
+        role: currentUser?.role || 'Customer',
+        subRole: currentUser?.subRole || null,
+        name: currentUser?.name || '',
+        currentPage: window.location.pathname
       })
     });
     
-    if (!res.ok) {
-      throw new Error("Server returned " + res.status);
-    }
+    if (!res.ok) throw new Error("Server error");
     
     const data = await res.json();
     
+    hideTyping();
     if (data.reply) {
-      appendBotMessage(data.reply);
-      messageHistory.push({ role: 'model', content: data.reply });
+      appendBotMessage(data.reply, data.suggestions || []);
     } else {
       appendBotMessage("I'm sorry, I didn't get a response. Please try again.");
     }
     
   } catch (err) {
     console.error("Chat error:", err);
-    appendBotMessage("Sorry, I encountered an error connecting to the server. Please try again later.");
+    hideTyping();
+    appendBotMessage("Sorry, I encountered an error. Please try again later.");
   } finally {
-    typingIndicator.classList.add('hidden');
-    chatInput.disabled = false;
-    sendBtn.disabled = false;
-    chatInput.focus();
+    if (chatInput) {
+      chatInput.disabled = false;
+      chatInput.focus();
+    }
+    if (sendBtn) sendBtn.disabled = false;
   }
 }

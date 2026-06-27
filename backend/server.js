@@ -45,6 +45,7 @@ app.use('/whatsapp', whatsappRouter);
 
 // Serve static files from frontend folder
 app.use(express.static(path.join(__dirname, '../frontend')));
+app.use('/pages', express.static(path.join(__dirname, '../frontend/pages')));
 
 // Serve the /firebase directory so frontend can load config
 app.use('/firebase', express.static(path.join(__dirname, '../firebase')));

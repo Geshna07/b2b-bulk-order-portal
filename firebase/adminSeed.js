@@ -7,19 +7,7 @@ import path from 'path';
 // Load environment variables
 dotenv.config();
 
-let projectId = 'startup-glass-23kpg';
-let databaseId = 'ai-studio-b2bbulkorderport-a4a0694c-1e99-4e4c-b915-7c9a490b1e92';
-
-try {
-  const configPath = path.resolve(process.cwd(), 'firebase-applet-config.json');
-  if (fs.existsSync(configPath)) {
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    if (config.projectId) projectId = config.projectId;
-    if (config.firestoreDatabaseId) databaseId = config.firestoreDatabaseId;
-  }
-} catch (e) {
-  console.warn('Error reading firebase-applet-config.json:', e);
-}
+const FLAG_FILE = path.join(process.cwd(), 'firebase', '.admin_seeded.flag');
 
 // Helper to generate a strong 12-character random password
 function generatePassword() {
@@ -35,73 +23,87 @@ function generatePassword() {
   return password.split('').sort(() => 0.5 - Math.random()).join('');
 }
 
-async function createAdminAccount() {
+async function createAdminAccounts() {
+  if (fs.existsSync(FLAG_FILE)) {
+    console.log('Admin accounts already seeded, skipping.');
+    return;
+  }
+
   console.log('Initiating Super Admin Setup...');
   
-  const email = 'admin@gangamaxx.com';
-  const password = 'password123';
+  const admins = [
+    { email: 'admin@gangamaxx.com', name: 'Primary Admin', password: 'ADMIN1@123' },
+    { email: 'superadmin@gangamaxx.com', name: 'Backup Admin', password: 'ADMIN2@123' }
+  ];
+  
+  const credentials = [];
 
-  let userRecord = null;
-  let uid = 'admin_gangamaxx_super_admin';
-  try {
-    // 1. Create User in Firebase Authentication
-    userRecord = await auth.createUser({
-      email: email,
-      emailVerified: true,
-      password: password,
-      displayName: 'Ganga Maxx Super Admin',
-      disabled: false
-    });
-    uid = userRecord.uid;
+  for (const adminInfo of admins) {
+    const password = adminInfo.password;
+    credentials.push({ ...adminInfo, password });
 
-    console.log('\n======================================================');
-    console.log('⚠️  SUPER ADMIN CREATED SUCCESSFULLY IN AUTHENTICATION ⚠️');
-    console.log(`Email: ${email}`);
-    console.log(`Password: ${password}`);
-    console.log('NOTE: Save this password immediately. It will not be shown again.');
-    console.log('======================================================\n');
-  } catch (createErr) {
-    if (createErr.code === 'auth/email-already-exists') {
-      console.log(`⚠️ Admin account (${email}) already exists in Firebase Authentication.`);
-      try {
-        userRecord = await auth.getUserByEmail(email);
-        uid = userRecord.uid;
-      } catch (getErr) {
-        console.warn('Could not get existing auth user by email, using fallback ID', getErr);
+    let userRecord = null;
+    try {
+      // 1. Create User in Firebase Authentication
+      userRecord = await auth.createUser({
+        email: adminInfo.email,
+        emailVerified: true,
+        password: password,
+        displayName: adminInfo.name,
+        disabled: false
+      });
+      
+      const uid = userRecord.uid;
+
+      // 2. Create User Profile in Firestore
+      const adminUserData = {
+        uid: uid,
+        name: adminInfo.name,
+        email: adminInfo.email,
+        role: 'admin',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+      };
+
+      await db.collection('users').doc(uid).set(adminUserData);
+      console.log(`Successfully mapped admin user ${adminInfo.email} to Firestore!`);
+    } catch (createErr) {
+      if (createErr.code === 'auth/email-already-exists') {
+        console.log(`⚠️ Admin account (${adminInfo.email}) already exists.`);
+        // Try to update password if already exists
+        const user = await auth.getUserByEmail(adminInfo.email);
+        await auth.updateUser(user.uid, { password: password });
+        console.log(`Updated password for existing admin ${adminInfo.email}.`);
+      } else {
+        console.error(`⚠️ Error creating admin ${adminInfo.email}:`, createErr.message);
       }
-    } else {
-      console.warn('⚠️ Firebase Authentication is not available or enabled. Skipping Auth user creation and setting up Firestore profile directly.', createErr.message || createErr);
     }
   }
 
-  // 2. Create/Update User Profile in Firestore 'users' collection
-  const adminUserData = {
-    uid: uid,
-    name: 'Ganga Maxx Super Admin',
-    email: email,
-    password: password,
-    phone: '+919999999999',
-    role: 'admin',
-    subRole: null,
-    institutionName: 'Ganga Maxx HQ',
-    institutionType: 'Wholesaler',
-    address: {
-      street: 'Ganga Maxx Plaza, Sector 62',
-      city: 'Noida',
-      state: 'Uttar Pradesh',
-      pincode: '201301'
-    },
-    status: 'active',
-    createdAt: new Date().toISOString(),
-    whatsappNumber: '+919999999999',
-    _securityNote: 'Save this password immediately'
-  };
+  // Print credentials once
+  console.log("====================================");
+  console.log("🔐 ADMIN CREDENTIALS — SAVE NOW!");
+  console.log("====================================");
+  let credString = "export const credentials = [\n";
+  for (const cred of credentials) {
+    console.log(`${cred.name}:`);
+    console.log(`Email: ${cred.email}`);
+    console.log(`Password: ${cred.password}`);
+    console.log("------------------------------------");
+    credString += `  { name: '${cred.name}', email: '${cred.email}', password: '${cred.password}' },\n`;
+  }
+  credString += "];";
+  console.log("====================================");
+  console.log("⚠️ These will NOT be shown again!");
+  console.log("====================================");
+  
+  fs.writeFileSync(path.join(process.cwd(), 'backend', 'routes', 'credentials.js'), credString);
 
-  await db.collection('users').doc(uid).set(adminUserData);
-  console.log(`Successfully mapped admin user ${uid} to Firestore users collection!`);
+  // Set flag file
+  fs.writeFileSync(FLAG_FILE, 'seeded');
 }
 
 // Run the script
-createAdminAccount().catch(err => {
+createAdminAccounts().catch(err => {
   console.error('⚠️ Critical error in admin seeding script:', err);
 });
