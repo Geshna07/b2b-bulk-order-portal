@@ -1,4 +1,5 @@
-import firebaseAdmin from 'firebase-admin';
+import { initializeApp as initializeAdminApp, getApps as getAdminApps, applicationDefault as adminApplicationDefault } from 'firebase-admin/app';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import fs from 'fs';
@@ -19,13 +20,13 @@ let _adminDb = null;
 
 function getAuth() {
   if (!_auth) {
-    if (!firebaseAdmin.apps.length) {
-      firebaseAdmin.initializeApp({
-        credential: firebaseAdmin.credential.applicationDefault(),
+    if (!getAdminApps().length) {
+      initializeAdminApp({
+        credential: adminApplicationDefault(),
         projectId: 'startup-glass-23kpg'
       });
     }
-    _auth = firebaseAdmin.auth();
+    _auth = getAdminAuth();
   }
   return _auth;
 }

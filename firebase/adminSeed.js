@@ -32,15 +32,15 @@ async function createAdminAccounts() {
   console.log('Initiating Super Admin Setup...');
   
   const admins = [
-    { email: 'admin@gangamaxx.com', name: 'Primary Admin', password: 'ADMIN1@123' },
-    { email: 'superadmin@gangamaxx.com', name: 'Backup Admin', password: 'ADMIN2@123' }
+    { email: 'admin@gangamaxx.com', name: 'Primary Admin', password: generatePassword() },
+    { email: 'superadmin@gangamaxx.com', name: 'Backup Admin', password: generatePassword() }
   ];
   
-  const credentials = [];
+  const credentials = {};
 
   for (const adminInfo of admins) {
     const password = adminInfo.password;
-    credentials.push({ ...adminInfo, password });
+    credentials[adminInfo.email] = password;
 
     let userRecord = null;
     try {
@@ -80,24 +80,10 @@ async function createAdminAccounts() {
     }
   }
 
-  // Print credentials once
-  console.log("====================================");
-  console.log("🔐 ADMIN CREDENTIALS — SAVE NOW!");
-  console.log("====================================");
-  let credString = "export const credentials = [\n";
-  for (const cred of credentials) {
-    console.log(`${cred.name}:`);
-    console.log(`Email: ${cred.email}`);
-    console.log(`Password: ${cred.password}`);
-    console.log("------------------------------------");
-    credString += `  { name: '${cred.name}', email: '${cred.email}', password: '${cred.password}' },\n`;
-  }
-  credString += "];";
-  console.log("====================================");
-  console.log("⚠️ These will NOT be shown again!");
-  console.log("====================================");
-  
-  fs.writeFileSync(path.join(process.cwd(), 'backend', 'routes', 'credentials.js'), credString);
+  // Save credentials to root admin_credentials.json (gitignored)
+  const credPath = path.join(process.cwd(), 'admin_credentials.json');
+  fs.writeFileSync(credPath, JSON.stringify(credentials, null, 2), 'utf-8');
+  console.log(`🔐 Admin setup complete. Saved credentials to admin_credentials.json (gitignored).`);
 
   // Set flag file
   fs.writeFileSync(FLAG_FILE, 'seeded');

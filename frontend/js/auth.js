@@ -113,83 +113,25 @@ function redirectBasedOnRole(userData) {
   }
 }
 
-// Core Login function with fallback to direct database lookup
+// Core Login function
 async function loginUser(email, password, expectedRole) {
   try {
     email = email.trim().toLowerCase();
     let userData = null;
     
-    // Attempt standard Firebase Auth sign-in first
-    try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const userUid = userCredential.user.uid;
-      
-      const userDocRef = doc(db, 'users', userUid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        userData = userDoc.data();
-        userData.uid = userUid;
-      }
-    } catch (authError) {
-      console.warn("Firebase Auth sign-in unavailable or failed. Trying direct Firestore lookup...", authError);
-      
-      // Fallback: Check if user exists directly in Firestore
-      const q = query(collection(db, 'users'), where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        const matchedDoc = querySnapshot.docs[0];
-        const dbData = matchedDoc.data();
-        
-        // If user exists in Firestore, accept
-        userData = { ...dbData, uid: matchedDoc.id };
-        // Removed insecure password check against Firestore field
-      } else {
-        // Dynamic Auto-registration: user does not exist, so let's register them!
-        console.log(`Auto-registering new ${expectedRole} account for ${email}...`);
-        try {
-          // 1. Create in Firebase Auth
-          let uid;
-          try {
-            const userCred = await createUserWithEmailAndPassword(auth, email, password);
-            uid = userCred.user.uid;
-          } catch (createAuthErr) {
-            console.warn("Auth signup failed (might already exist in auth, or offline), generating local UID", createAuthErr);
-            uid = expectedRole + '_' + Math.random().toString(36).substring(2, 11);
-          }
-          
-          // 2. Set Firestore Doc
-          const newDoc = {
-            uid: uid,
-            name: email.split('@')[0].toUpperCase(),
-            email: email,
-            phone: '+919999999999',
-            whatsappNumber: '+919999999999',
-            role: expectedRole,
-            subRole: expectedRole === 'staff' ? 'salesman' : null,
-            institutionName: 'Ganga Maxx HQ',
-            institutionType: expectedRole === 'customer' ? 'Hospital' : 'Wholesaler',
-            address: {
-              street: 'Ganga Maxx Plaza, Sector 62',
-              city: 'Noida',
-              state: 'Uttar Pradesh',
-              pincode: '201301'
-            },
-            status: 'active',
-            createdAt: new Date().toISOString()
-          };
-          
-          await setDoc(doc(db, 'users', uid), newDoc);
-          userData = newDoc;
-        } catch (regErr) {
-          console.error("Auto-registration failed:", regErr);
-          throw new Error("No registered account found with this email address and auto-registration failed: " + regErr.message);
-        }
-      }
+    // Attempt standard Firebase Auth sign-in
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const userUid = userCredential.user.uid;
+    
+    const userDocRef = doc(db, 'users', userUid);
+    const userDoc = await getDoc(userDocRef);
+    if (userDoc.exists()) {
+      userData = userDoc.data();
+      userData.uid = userUid;
     }
 
     if (!userData) {
-      throw new Error("Account details could not be retrieved.");
+      throw new Error("Account details could not be retrieved from the database.");
     }
 
     // Strict Role Enforcement based on UI role selector
@@ -217,6 +159,8 @@ async function loginUser(email, password, expectedRole) {
     let errorMessage = error.message;
     if (error.code === 'auth/operation-not-allowed') {
       errorMessage = "Email/Password sign-in is not enabled in this Firebase project. Please enable it in the Firebase Console (Authentication -> Sign-in method).";
+    } else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+      errorMessage = "Invalid email address or password. Please verify your credentials.";
     }
     return { success: false, error: errorMessage };
   }

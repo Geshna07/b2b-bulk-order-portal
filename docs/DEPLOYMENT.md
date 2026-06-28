@@ -37,23 +37,23 @@ This document outlines the steps to deploy the Ganga Maxx B2B Bulk Order Portal 
 1. In Firebase Console > Project Settings > Service Accounts.
 2. Click **Generate new private key**. This downloads a JSON file.
 3. Keep this file safe. You will need its contents for the backend.
-4. Set up your \`.env\` file for the backend based on \`.env.example\`:
-   - \`PORT=3000\`
-   - \`GEMINI_API_KEY=your_gemini_api_key\`
-   - \`FIREBASE_SERVICE_ACCOUNT=stringified_json_content\` 
+4. Set up your `.env` file for the backend based on `.env.example`:
+   - `PORT=3000`
+   - `GEMINI_API_KEY=your_gemini_api_key`
+   - `FIREBASE_SERVICE_ACCOUNT=stringified_json_content` 
    *(Note: You can compress the JSON into a single string for Render environment variables)*
 
 ---
 
-## Step 3: Seed the Admin Account
+## Step 3: Seed the Admin Accounts
 
 1. Open a terminal in the project root.
-2. Run \`npm install\` to install dependencies.
-3. Run \`npm run start\` locally. 
-4. The system will automatically run \`/firebase/seedDatabase.js\` and create the default admin account:
-   - **Email:** admin@gangamaxx.com
-   - **Password:** Admin@123!
-5. *Security Note: Change this password immediately after first login in production.*
+2. Run `npm install` to install dependencies.
+3. Run `npm run start` or `node firebase/adminSeed.js` locally.
+4. The system will automatically run `/firebase/adminSeed.js` and generate 2 confidential admin accounts:
+   - **Emails:** admin@gangamaxx.com, superadmin@gangamaxx.com
+   - **Passwords:** Strong passwords are auto-generated on startup and saved securely to `admin_credentials.json` at the root folder (which is gitignored).
+5. Open `admin_credentials.json` to retrieve the generated passwords for initial login.
 
 ---
 

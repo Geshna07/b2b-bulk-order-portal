@@ -175,11 +175,7 @@ async function seedDatabase() {
           console.warn(`⚠️ Firebase Authentication service is unavailable. Skipping Auth user creation and setting up Firestore profile directly for ${user.uid}.`);
         }
       }
-      const userWithFallback = {
-        password: 'password123',
-        ...user
-      };
-      await db.collection('users').doc(user.uid).set(userWithFallback);
+      await db.collection('users').doc(user.uid).set(user);
     }
 
     // 2. SEEDING PRODUCTS
