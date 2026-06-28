@@ -23,7 +23,7 @@ function getAuth() {
     if (!getAdminApps().length) {
       initializeAdminApp({
         credential: adminApplicationDefault(),
-        projectId: 'startup-glass-23kpg'
+        projectId: config.projectId
       });
     }
     _auth = getAdminAuth();
@@ -101,6 +101,12 @@ const auth = {
     },
     createUser: async (user) => {
         return await getAuth().createUser(user);
+    },
+    getUserByEmail: async (email) => {
+        return await getAuth().getUserByEmail(email);
+    },
+    updateUser: async (uid, properties) => {
+        return await getAuth().updateUser(uid, properties);
     }
 };
 

@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for auth and roles
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function getUserRole() {
+      return getUserData().role;
+    }
+
+    function getUserSubRole() {
+      return getUserData().subRole;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+
+    function isStaff() {
+      return isAuthenticated() && getUserRole() == 'staff';
+    }
+
+    function isCustomer() {
+      return isAuthenticated() && getUserRole() == 'customer';
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isStaff() || isAdmin());
+      allow create: if true; // Allow new registration
+      allow update, delete: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // 2. Products collection
+    match /products/{productId} {
+      allow read: if true; // Allow public viewing of catalog
+      allow write: if isAdmin() || (isStaff() && (getUserSubRole() == 'complianceAdmin' || getUserSubRole() == 'salesAdmin'));
+    }
+
+    // 3. Orders collection
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (
+        resource.data.customerId == request.auth.uid ||
+        isStaff() ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        resource.data.customerId == request.auth.uid ||
+        isStaff() ||
+        isAdmin()
+      );
+    }
+
+    // 4. Quotations collection
+    match /quotations/{quotationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.customerId == request.auth.uid ||
+        (isStaff() && (getUserSubRole() == 'salesman' || getUserSubRole() == 'salesAdmin')) ||
+        isAdmin()
+      );
+      allow write: if isAdmin() || (isStaff() && (getUserSubRole() == 'salesman' || getUserSubRole() == 'salesAdmin'));
+    }
+
+    // 5. Inventory collection
+    match /inventory/{inventoryId} {
+      allow read: if isAuthenticated() && (isStaff() || isAdmin());
+      allow write: if isAdmin() || (isStaff() && getUserSubRole() == 'warehouseStaff');
+    }
+
+    // 6. Deliveries collection
+    match /deliveries/{deliveryId} {
+      allow read: if isAuthenticated() && (
+        isStaff() ||
+        isAdmin() ||
+        get(/databases/$(database)/documents/orders/$(resource.data.orderId)).data.customerId == request.auth.uid
+      );
+      allow write: if isAdmin() || (isStaff() && (getUserSubRole() == 'deliveryCoordinator' || getUserSubRole() == 'logistics'));
+    }
+
+    // 7. Credit Accounts collection
+    match /creditAccounts/{creditId} {
+      allow read: if isAuthenticated() && (
+        resource.data.customerId == request.auth.uid ||
+        (isStaff() && getUserSubRole() == 'accountsManager') ||
+        isAdmin()
+      );
+      allow write: if isAdmin() || (isStaff() && getUserSubRole() == 'accountsManager');
+    }
+
+    // 8. Compliance Records collection
+    match /complianceRecords/{complianceId} {
+      allow read: if isAuthenticated() && (
+        isStaff() ||
+        isAdmin()
+      );
+      allow write: if isAdmin() || (isStaff() && getUserSubRole() == 'complianceAdmin');
+    }
+  }
+}

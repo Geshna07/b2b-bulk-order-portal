@@ -1,8 +1,27 @@
 import { db } from '../utils/firebaseAdmin.js';
 import { GoogleGenAI } from '@google/genai';
+import dotenv from 'dotenv';
+
+// Guarantee environment variables are loaded
+dotenv.config();
+
+const geminiApiKey = process.env.GEMINI_API_KEY;
+
+// Check if API key is missing or placeholder
+const isKeyInvalid = !geminiApiKey || 
+  geminiApiKey.trim() === '' || 
+  geminiApiKey.includes('YOUR_GEMINI_API_KEY') || 
+  geminiApiKey.includes('YOUR_API_KEY');
+
+if (isKeyInvalid) {
+  console.warn('\n==================================================================');
+  console.warn('⚠️ WARNING: Gemini API Key is missing or invalid in your .env file!');
+  console.warn('   Please set a valid GEMINI_API_KEY in the .env file to enable the AI assistant.');
+  console.warn('==================================================================\n');
+}
 
 const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
+  apiKey: geminiApiKey || 'INVALID_KEY_FALLBACK',
   httpOptions: {
     headers: {
       'User-Agent': 'aistudio-build',
@@ -153,7 +172,7 @@ const wrapTable = (headers, rows) => {
 // Main controller handler for /assistant/query
 export async function queryAssistant(req, res) {
   try {
-    const { message, userId, role, subRole, name } = req.body;
+    const { message, userId, role, subRole, name, messages } = req.body;
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
     }
@@ -161,7 +180,15 @@ export async function queryAssistant(req, res) {
     const intent = detectIntent(message);
     const normRole = getNormalizedRole(role, subRole);
 
-    console.log(`[Assistant Query] Message: "${message}" | Intent: ${intent} | Role: ${normRole} | User: ${name || userId}`);
+    // Logging: Request received
+    console.log(`\n==================================================`);
+    console.log(`🤖 [AI ASSISTANT REQUEST RECEIVED]`);
+    console.log(`User ID:      ${userId || 'N/A'}`);
+    console.log(`Name:         ${name || 'N/A'}`);
+    console.log(`Role:         ${normRole}`);
+    console.log(`Intent:       ${intent}`);
+    console.log(`Message:      "${message}"`);
+    console.log(`==================================================\n`);
 
     // If intent is GENERAL, fall back to Gemini-powered conversational assistant
     if (intent === 'GENERAL') {
@@ -730,10 +757,14 @@ export async function queryAssistant(req, res) {
     return res.json({ reply, suggestions, intent });
 
   } catch (error) {
-    console.error("Assistant API Error:", error);
-    return res.json({
-      reply: "I couldn't fetch that data right now. Please check the dashboard directly.",
-      suggestions: ["How to place an order?", "How to track a delivery?", "Report a problem"],
+    console.error(`\n==================================================`);
+    console.error(`❌ [AI ASSISTANT ERROR DETECTED]`);
+    console.error(error.stack || error);
+    console.error(`==================================================\n`);
+
+    return res.status(200).json({
+      reply: "I'm temporarily unable to connect to the AI service. Please try again in a moment.",
+      suggestions: ["How to place an order?", "How to track a delivery?", "Account setup help"],
       intent: 'ERROR'
     });
   }
@@ -741,11 +772,18 @@ export async function queryAssistant(req, res) {
 
 // Support conversational chat powered by Gemini (formerly handled by assistant.js)
 async function handleGeneralChat(req, res) {
-  const { messages, role, currentPage } = req.body;
-  const lastUserMessage = messages[messages.length - 1].content.toLowerCase();
+  const { messages, role, currentPage, message } = req.body;
+
+  // Robust parsing: construct messages list if it is missing or not an array
+  let chatMessages = messages;
+  if (!chatMessages || !Array.isArray(chatMessages)) {
+    chatMessages = [{ role: 'user', content: message || '' }];
+  }
+
+  const lastUserMessage = chatMessages[chatMessages.length - 1]?.content?.toLowerCase() || '';
 
   const contents = [];
-  for (const msg of messages) {
+  for (const msg of chatMessages) {
     if (msg.role === 'user' || msg.role === 'model') {
       contents.push({
         role: msg.role === 'user' ? 'user' : 'model',
@@ -765,11 +803,14 @@ async function handleGeneralChat(req, res) {
   for (const candidate of modelCandidates) {
     let delay = 1000;
     const attempts = 2;
-    let success = false;
     
     for (let attempt = 0; attempt < attempts; attempt++) {
       try {
-        console.log(`Attempting conversation fallback with model: ${candidate} (attempt ${attempt + 1})`);
+        console.log(`[Gemini Request] Attempting conversational completion:`);
+        console.log(`  Model: ${candidate}`);
+        console.log(`  Attempt: ${attempt + 1}/${attempts}`);
+        console.log(`  System Prompt Context: "${SYSTEM_PROMPT + contextInstruction}"`);
+
         const result = await ai.models.generateContent({
           model: candidate,
           contents: contents,
@@ -779,6 +820,8 @@ async function handleGeneralChat(req, res) {
         });
         
         const fullResponse = result.text;
+        console.log(`[Gemini Response] Success! Response text: "${fullResponse}"\n`);
+
         return res.json({
           reply: fullResponse,
           suggestions: ["How to place order", "How to track order", "Quotations help"],
@@ -786,14 +829,13 @@ async function handleGeneralChat(req, res) {
         });
       } catch (err) {
         lastError = err;
-        console.warn(`Attempt ${attempt + 1} failed for conversational model ${candidate}:`, err);
+        console.warn(`[Gemini Request Error] Attempt ${attempt + 1} failed for model ${candidate}:`, err.message);
         if (attempt < attempts - 1) {
           await sleep(delay);
           delay *= 2;
         }
       }
     }
-    if (success) return;
   }
   
   throw lastError || new Error("All general conversational model candidates failed.");

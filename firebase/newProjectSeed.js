@@ -90,7 +90,7 @@ async function testFirestoreConnection() {
 }
 
 async function seedDatabase() {
-  console.log(`Starting Firestore Seeding for project: ${expectedProjectId}...`);
+  console.log(`Starting Baseline Firestore Seeding for project: ${expectedProjectId}...`);
 
   try {
     // 1. SEEDING USERS
@@ -222,15 +222,16 @@ async function seedDatabase() {
             uid: user.uid,
             email: user.email,
             emailVerified: true,
-            password: 'password123',
+            password: 'password123', // Standard secure default password for seeding
             displayName: user.name,
             disabled: false
           });
           console.log(`Successfully created Auth user ${user.uid} (${user.email}).`);
         } else {
-          console.warn(`⚠️ Firebase Authentication service is unavailable. Skipping Auth user creation and setting up Firestore profile directly for ${user.uid}.`);
+          console.warn(`⚠️ Firebase Authentication service is unavailable: ${authErr.message}`);
         }
       }
+      // Note: plain-text password is NOT written to Firestore
       await db.collection('users').doc(user.uid).set(user);
     }
 
@@ -316,7 +317,7 @@ async function seedDatabase() {
         ],
         orderTotal: 26500,
         status: 'approved',
-        paymentStatus: 'partial',
+        paymentStatus: 'unpaid',
         assignedSalesman: 'Vikram Singh',
         deliveryAddress: {
           street: '21 Greams Road, Thousand Lights',
@@ -324,21 +325,21 @@ async function seedDatabase() {
           state: 'Tamil Nadu',
           pincode: '600006'
         },
-        notes: 'Priority hospital shipment. Deliver to Block-B reception basement.',
-        createdAt: getPastDate(4),
-        updatedAt: getPastDate(2),
+        notes: 'Priority hospital shipment. Keep handling records attached.',
+        createdAt: getPastDate(5),
+        updatedAt: getPastDate(4),
         statusHistory: [
           {
             status: 'pending',
             updatedBy: 'Dr. Ramesh Kumar',
-            timestamp: getPastDate(4),
-            note: 'Order submitted online.'
+            timestamp: getPastDate(5),
+            note: 'Order submitted through portal.'
           },
           {
             status: 'approved',
             updatedBy: 'Vikram Singh',
-            timestamp: getPastDate(2),
-            note: 'Wholesale tier discounts verified and approved.'
+            timestamp: getPastDate(4),
+            note: 'Commercial credit terms approved.'
           }
         ]
       },
@@ -398,7 +399,7 @@ async function seedDatabase() {
             productName: 'N95 Medical Grade Surgical Mask',
             qty: 100,
             unit: 'Box of 100',
-            pricePerUnit: 1050, // Special bulk pricing
+            pricePerUnit: 1050,
             totalPrice: 105000
           },
           {
@@ -406,7 +407,7 @@ async function seedDatabase() {
             productName: 'Hexashield Hospital Disinfectant Spirit',
             qty: 50,
             unit: '5-Litre Canister',
-            pricePerUnit: 800, // Special discount
+            pricePerUnit: 800,
             totalPrice: 40000
           }
         ],
@@ -547,9 +548,9 @@ async function seedDatabase() {
       await db.collection('complianceRecords').doc(comp.complianceId).set(comp);
     }
 
-    console.log('✅ All 8 collections seeded successfully with comprehensive sample data!');
+    console.log('✅ Baseline project setup completed successfully!');
   } catch (error) {
-    console.error('❌ Error seeding Firestore database:', error);
+    console.error('❌ Error during baseline database seeding:', error);
   }
 }
 

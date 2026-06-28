@@ -87,6 +87,14 @@ export async function loginWithGoogle(expectedRole) {
       errorMessage = "Previous login attempt was cancelled. Please try again.";
     } else if (error.code === 'auth/popup-blocked') {
       errorMessage = "The login popup was blocked by your browser. Please allow popups for this site.";
+    } else if (error.code === 'auth/unauthorized-domain') {
+      const currentDomain = window.location.hostname;
+      errorMessage = `The domain "${currentDomain}" is not authorized in your Firebase Project configuration. 
+
+Please follow these steps to add it:
+1. Open the Firebase Console for your project.
+2. Go to Authentication > Settings > Authorized domains.
+3. Click "Add domain" and add: ${currentDomain}`;
     }
     return { success: false, error: errorMessage };
   }
@@ -161,6 +169,14 @@ async function loginUser(email, password, expectedRole) {
       errorMessage = "Email/Password sign-in is not enabled in this Firebase project. Please enable it in the Firebase Console (Authentication -> Sign-in method).";
     } else if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
       errorMessage = "Invalid email address or password. Please verify your credentials.";
+    } else if (error.code === 'auth/unauthorized-domain') {
+      const currentDomain = window.location.hostname;
+      errorMessage = `The domain "${currentDomain}" is not authorized in your Firebase Project configuration. 
+
+Please follow these steps to add it:
+1. Open the Firebase Console for your project.
+2. Go to Authentication > Settings > Authorized domains.
+3. Click "Add domain" and add: ${currentDomain}`;
     }
     return { success: false, error: errorMessage };
   }

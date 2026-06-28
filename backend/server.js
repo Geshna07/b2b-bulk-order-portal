@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import adminRouter from './routes/admin.js';
@@ -12,9 +14,6 @@ import whatsappRouter from './routes/whatsapp.js';
 // Auto-seed database on startup
 import '../firebase/seedDatabase.js';
 import '../firebase/adminSeed.js';
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

@@ -1,10 +1,6 @@
 {
   "firestore": [
     {
-      "database": "ai-studio-b2bbulkorderport-a4a0694c-1e99-4e4c-b915-7c9a490b1e92",
-      "rules": "firestore.rules"
-    },
-    {
       "database": "(default)",
       "rules": "firestore.rules"
     }

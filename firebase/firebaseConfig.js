@@ -5,17 +5,18 @@ import { getAuth } from "firebase/auth";
 
 // Web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyA4oQgmRW9MImq7nlI2OR8aBBwmijc2jVA",
-  authDomain: "startup-glass-23kpg.firebaseapp.com",
-  projectId: "startup-glass-23kpg",
-  storageBucket: "startup-glass-23kpg.firebasestorage.app",
-  messagingSenderId: "992191424492",
-  appId: "1:992191424492:web:195814000683d8a7dd02c9"
+  apiKey: "AIzaSyA78jO4rnYMC7TS93XvThnzWZxAJgy1Jn0",
+  authDomain: "ganga-maxx-b2b.firebaseapp.com",
+  projectId: "ganga-maxx-b2b",
+  storageBucket: "ganga-maxx-b2b.firebasestorage.app",
+  messagingSenderId: "89022591023",
+  appId: "1:89022591023:web:4e74f35ca96cd9cc8756da",
+  measurementId: "G-C3LTRQ11FL"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app, "ai-studio-b2bbulkorderport-a4a0694c-1e99-4e4c-b915-7c9a490b1e92");
+const db = getFirestore(app);
 const auth = getAuth(app);
 
 export { app, db, auth };
