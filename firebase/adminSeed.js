@@ -32,8 +32,8 @@ async function createAdminAccounts() {
   console.log('Initiating Super Admin Setup...');
   
   const admins = [
-    { email: 'admin@gangamaxx.com', name: 'Primary Admin', password: generatePassword() },
-    { email: 'superadmin@gangamaxx.com', name: 'Backup Admin', password: generatePassword() }
+    { email: 'admin@gangamaxx.com', name: 'Primary Admin', password: 'ADMIN1@123' },
+    { email: 'superadmin@gangamaxx.com', name: 'Backup Admin', password: 'ADMIN2@123' }
   ];
   
   const credentials = {};
